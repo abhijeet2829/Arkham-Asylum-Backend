@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arkham Asylum Backend — Database ER Model & Schema</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 40%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 6px;
+            background: linear-gradient(90deg, #e07a5f, #b85a42);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+        .subtitle {
+            color: #8892a4;
+            font-size: 1rem;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+        .mermaid {
+            background: #12121f;
+            border: 1px solid #2a2a45;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .schema-section {
+            background: rgba(22, 22, 42, 0.6);
+            border: 1px solid #2a2a45;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        .schema-section h2 {
+            color: #e07a5f;
+            font-size: 1.4rem;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #2a2a45;
+            padding-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .table-explanation {
+            margin-bottom: 32px;
+        }
+        .table-explanation h3 {
+            color: #f5c542;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .table-explanation p {
+            color: #b0b8c8;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+        }
+        .field-list {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .field-list th, .field-list td {
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid #2a2a45;
+        }
+        .field-list th {
+            color: #8892a4;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.03);
+        }
+        .field-list td { color: #e0e0e0; }
+        .field-list td code {
+            background: #1e1e35;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #e07a5f;
+        }
+        .field-list td .type { color: #56b4e9; }
+        .relationship-note {
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: #e8a730;
+            font-style: italic;
+        }
+        footer {
+            margin-top: 60px;
+            color: #555;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🦇 Arkham Asylum — Database ER Model & Schema</h1>
+    <p class="subtitle">Entity-Relationship Visualizer &amp; Technical Field Documentation</p>
+
+    <div class="container">
+        
+        <!-- VISUAL ER MODEL -->
+        <div class="mermaid">
+erDiagram
+    InmateProfile ||--|| MedicalFile : "has record"
+    InmateProfile ||--o{ AuditLog : "target of"
+    MedicalFile ||--o{ AuditLog : "target of"
+
+    InmateProfile {
+        int id PK
+        string name "Max 100"
+        string alias "Max 50"
+        string cell_block "Max 20"
+    }
+
+    MedicalFile {
+        int id PK
+        int inmate_id FK "OneToOne"
+        string diagnosis "Max 100"
+        string meds "Max 150"
+    }
+
+    AuditLog {
+        int id PK
+        string actor_name "Max 100"
+        string action_type "Max 50"
+        string target_model "Max 50"
+        int target_id
+        datetime timestamp
+    }
+        </div>
+
+        <!-- DETAILED SCHEMA EXPLANATION -->
+        <div class="schema-section">
+            <h2>📜 Data Dictionary &amp; Logic</h2>
+
+            <!-- Table: InmateProfile -->
+            <div class="table-explanation">
+                <h3>TABLE: arkham_app_inmateprofile</h3>
+                <p>The primary entity representing individuals incarcerated within the Asylum. This table stores non-sensitive identity data and physical location within the facility.</p>
+                <table class="field-list">
+                    <thead>
+                        <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Purpose</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>id</code></td><td><span class="type">Integer</span></td><td>Primary Key, Auto-Increment</td><td>System unique identifier</td></tr>
+                        <tr><td><code>name</code></td><td><span class="type">Varchar(100)</span></td><td>Required</td><td>Legal or birth name of the inmate</td></tr>
+                        <tr><td><code>alias</code></td><td><span class="type">Varchar(50)</span></td><td>Required</td><td>Known criminal moniker or supervillain persona</td></tr>
+                        <tr><td><code>cell_block</code></td><td><span class="type">Varchar(20)</span></td><td>Required</td><td>Current housing assignment within Arkham</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table: MedicalFile -->
+            <div class="table-explanation">
+                <h3>TABLE: arkham_app_medicalfile</h3>
+                <p>Stores highly sensitive psycho-medical data. Access to this table is strictly throttled and restricted to Medical Staff. It shares a strict life-cycle with the Inmate record.</p>
+                <table class="field-list">
+                    <thead>
+                        <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Purpose</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>id</code></td><td><span class="type">Integer</span></td><td>Primary Key, Auto-Increment</td><td>System unique identifier</td></tr>
+                        <tr><td><code>inmate_id</code></td><td><span class="type">Integer</span></td><td>Unique, Foreign Key</td><td>Link to <code>InmateProfile</code> (Strict 1:1)</td></tr>
+                        <tr><td><code>diagnosis</code></td><td><span class="type">Varchar(100)</span></td><td>Required</td><td>The primary psychological/medical finding</td></tr>
+                        <tr><td><code>meds</code></td><td><span class="type">Varchar(150)</span></td><td>Required</td><td>Current prescribed medication regimen</td></tr>
+                    </tbody>
+                </table>
+                <p class="relationship-note">⚠️ RELATIONSHIP: One-To-One. Deleting an InmateProfile will automatically cascade and delete their MedicalFile.</p>
+            </div>
+
+            <!-- Table: AuditLog -->
+            <div class="table-explanation">
+                <h3>TABLE: arkham_app_auditlog</h3>
+                <p>A chronological record of all significant system actions. This table is write-only for the application (via signals/decorators) and read-only for high-level security staff.</p>
+                <table class="field-list">
+                    <thead>
+                        <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Purpose</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>id</code></td><td><span class="type">Integer</span></td><td>Primary Key, Auto-Increment</td><td>System unique identifier</td></tr>
+                        <tr><td><code>actor_name</code></td><td><span class="type">Varchar(100)</span></td><td>Required</td><td>Username of the person who took the action</td></tr>
+                        <tr><td><code>action_type</code></td><td><span class="type">Varchar(50)</span></td><td>Required</td><td>CREATE, UPDATE, DELETE, or READ</td></tr>
+                        <tr><td><code>target_model</code></td><td><span class="type">Varchar(50)</span></td><td>Required</td><td>Which entity was affected (e.g., InmateProfile)</td></tr>
+                        <tr><td><code>target_id</code></td><td><span class="type">Integer</span></td><td>Required</td><td>The PK of the affected entity</td></tr>
+                        <tr><td><code>timestamp</code></td><td><span class="type">DateTime</span></td><td>Auto-set on creation</td><td>Exact server time of the event</td></tr>
+                    </tbody>
+                </table>
+                <p class="relationship-note">🔍 LOGIC: Ordered by <code>-timestamp</code>. Entries are generated automatically by Django Signals and custom ViewSet decorators.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>Arkham Asylum Registry — Database Documentation &bull; Developed for Gotham City Administration</footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                darkMode: true,
+                background: '#12121f',
+                primaryColor: '#2a2a45',
+                primaryTextColor: '#e0e0e0',
+                lineColor: '#e07a5f',
+                fontSize: '13px'
+            },
+            er: {
+                useMaxWidth: true,
+                padding: 15
+            }
+        });
+    </script>
+</body>
+</html>

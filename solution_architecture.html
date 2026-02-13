@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Arkham Asylum Backend — Solution Architecture</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(
+                    135deg,
+                    #0a0a1a 0%,
+                    #1a1a2e 40%,
+                    #16213e 100%
+                );
+                color: #e0e0e0;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 40px 20px;
+            }
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 6px;
+                background: linear-gradient(90deg, #f5c542, #e8a730);
+                -webkit-background-clip: text;
+                background-clip: text;
+                -webkit-text-fill-color: transparent;
+                text-align: center;
+            }
+            .subtitle {
+                color: #8892a4;
+                font-size: 0.95rem;
+                text-align: center;
+                margin-bottom: 36px;
+            }
+            .mermaid {
+                background: #12121f;
+                border: 1px solid #2a2a45;
+                border-radius: 12px;
+                padding: 36px 24px;
+                width: 100%;
+                max-width: 1100px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            }
+            .legend {
+                margin-top: 32px;
+                max-width: 1100px;
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 16px;
+            }
+            .legend-card {
+                background: #16162a;
+                border: 1px solid #2a2a45;
+                border-radius: 10px;
+                padding: 16px 18px;
+            }
+            .legend-card h3 {
+                font-size: 0.85rem;
+                color: #f5c542;
+                margin-bottom: 6px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .legend-card p {
+                font-size: 0.82rem;
+                color: #8892a4;
+                line-height: 1.5;
+            }
+            footer {
+                margin-top: 40px;
+                color: #555;
+                font-size: 0.75rem;
+            }
+            .description-section {
+                margin-top: 48px;
+                max-width: 1100px;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+            }
+            .description-card {
+                background: rgba(22, 22, 42, 0.6);
+                border: 1px solid #2a2a45;
+                border-radius: 12px;
+                padding: 24px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            }
+            .description-card h4 {
+                color: #f5c542;
+                font-size: 1.1rem;
+                margin-bottom: 12px;
+                border-bottom: 1px solid #2a2a45;
+                padding-bottom: 8px;
+            }
+            .description-card p {
+                line-height: 1.7;
+                color: #b0b8c8;
+                font-size: 0.95rem;
+            }
+            .description-card b {
+                color: #e8a730;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>🦇 Arkham Asylum Backend — Solution Architecture</h1>
+        <p class="subtitle">
+            High-level view for business stakeholders, VPs & Non technical audience
+        </p>
+
+        <div class="mermaid">
+graph TB
+    subgraph EXT["🌐 External Users"]
+        direction LR
+        W["🔑 Warden<br/><i>Super Admin</i>"]
+        M["🩺 Medical Staff<br/><i>Dr. Leland</i>"]
+        S["🛡️ Security Staff<br/><i>Guard Boles</i>"]
+        P["👤 Public Visitor<br/><i>Read-Only</i>"]
+    end
+
+    subgraph SEC["🔒 Security Gateway"]
+        direction TB
+        AUTH["Identity Verification<br/><i>JWT Token Authentication</i>"]
+        RBAC["Access Control<br/><i>Role-Based Permissions</i>"]
+        THROTTLE["Rate Limiting<br/><i>Anti Brute-Force Protection</i>"]
+        AUTH --> RBAC --> THROTTLE
+    end
+
+    subgraph CORE["⚙️ Core Business Modules"]
+        direction LR
+        IM["📋 Inmate Management<br/><i>Profiles &amp; Cell Assignments</i>"]
+        MR["🏥 Medical Records<br/><i>Diagnosis &amp; Medications</i>"]
+        AW["🔍 Audit &amp; Watchtower<br/><i>Activity Monitoring</i>"]
+    end
+
+    subgraph DATA["💾 Information Records"]
+        direction LR
+        IR["📁 Inmate Records<br/><i>Profiles &amp; Medical Data</i>"]
+        SL["📜 Security Logs<br/><i>Immutable Action Trail</i>"]
+    end
+
+    subgraph AUTO["⚡ Auto-Record Engine"]
+        SIG["Automatic Event Capture<br/><i>Create · Update · Delete · Read</i>"]
+    end
+
+    W --> SEC
+    M --> SEC
+    S --> SEC
+    P --> SEC
+
+    SEC --> CORE
+
+    IM --> DATA
+    MR --> DATA
+    AW --> SL
+
+    IM --> AUTO
+    MR --> AUTO
+    AUTO --> SL
+
+    %% Access matrix
+    W -. "Full Access to All Modules" .-> CORE
+    M -. "Medical Records Only" .-> MR
+    S -. "View Inmates + Transfer" .-> IM
+    P -. "View Inmate Profiles Only" .-> IM
+
+    style EXT fill:#1a1a3a,stroke:#4a4a7a,color:#e0e0e0
+    style SEC fill:#2a1525,stroke:#8b3a62,color:#e0e0e0
+    style CORE fill:#152a20,stroke:#3a8b5a,color:#e0e0e0
+    style DATA fill:#1a2535,stroke:#3a6a8b,color:#e0e0e0
+    style AUTO fill:#2a2515,stroke:#8b7a3a,color:#e0e0e0
+
+    style W fill:#f5c542,stroke:#c9a030,color:#1a1a2e
+    style M fill:#56b4e9,stroke:#3a90c0,color:#1a1a2e
+    style S fill:#e07a5f,stroke:#b85a42,color:#1a1a2e
+    style P fill:#8ac48a,stroke:#60a060,color:#1a1a2e
+
+    style AUTH fill:#6b3a6b,stroke:#9b5a9b,color:#e0e0e0
+    style RBAC fill:#6b3a6b,stroke:#9b5a9b,color:#e0e0e0
+    style THROTTLE fill:#6b3a6b,stroke:#9b5a9b,color:#e0e0e0
+
+    style IM fill:#1a4a2a,stroke:#3a8b5a,color:#e0e0e0
+    style MR fill:#1a4a2a,stroke:#3a8b5a,color:#e0e0e0
+    style AW fill:#1a4a2a,stroke:#3a8b5a,color:#e0e0e0
+
+    style IR fill:#1a3a55,stroke:#3a7aab,color:#e0e0e0
+    style SL fill:#1a3a55,stroke:#3a7aab,color:#e0e0e0
+    style SIG fill:#3a3515,stroke:#8b7a3a,color:#e0e0e0
+        </div>
+
+        <div class="legend">
+            <div class="legend-card">
+                <h3>🔑 Warden (Super Admin)</h3>
+                <p>
+                    Full unrestricted access to inmate profiles, medical
+                    records, and audit logs. Can create, read, update, and
+                    delete any record.
+                </p>
+            </div>
+            <div class="legend-card">
+                <h3>🩺 Medical Staff</h3>
+                <p>
+                    Can view and update medical records (diagnosis &amp;
+                    medications). Can view inmate profiles but cannot modify
+                    them.
+                </p>
+            </div>
+            <div class="legend-card">
+                <h3>🛡️ Security Staff</h3>
+                <p>
+                    Can view inmate profiles and perform cell block transfers.
+                    Cannot access medical records or the audit log directly.
+                </p>
+            </div>
+            <div class="legend-card">
+                <h3>👤 Public Visitor</h3>
+                <p>
+                    Read-only access to non-sensitive inmate information (name,
+                    alias, cell block). No access to medical or audit data.
+                </p>
+            </div>
+            <div class="legend-card">
+                <h3>⚡ Auto-Record Engine</h3>
+                <p>
+                    Every create, update, delete, and read action on inmate or
+                    medical data is automatically captured as an immutable
+                    security log entry.
+                </p>
+            </div>
+            <div class="legend-card">
+                <h3>🔒 Security Gateway</h3>
+                <p>
+                    Three layers of protection: JWT identity verification,
+                    role-based access control, and rate limiting to prevent
+                    abuse or brute-force attempts.
+                </p>
+            </div>
+        </div>
+
+        <!-- Architectural Component Narratives -->
+        <div class="description-section">
+            <div class="description-card">
+                <h4>🛡️ Security &amp; Access Control</h4>
+                <p>The Arkham Registry implements a <b>Zero Trust</b> adjacent philosophy. No request enters the core system without passing through the Security Gateway. <b>JWT (JSON Web Tokens)</b> ensure that every actor is who they claim to be, while <b>Group-Based Permissions</b> ensure they can only perform actions authorized for their specific role (e.g., Medical Staff cannot initiate inmate transfers).</p>
+            </div>
+            <div class="description-card">
+                <h4>📋 Core Modules &amp; Business Logic</h4>
+                <p>The system is divided into functional domains. <b>Inmate Management</b> handles the lifecycle of prisoners and their physical location within the Asylum. <b>Medical Records</b> handles sensitive health data, isolated under strict privacy controls. Our <b>Audit &amp; Watchtower</b> module serves as the eyes of the administration, providing full transparency into system usage.</p>
+            </div>
+            <div class="description-card">
+                <h4>📜 The Immutable Audit Trail</h4>
+                <p>Security is enforced not just at the gate, but through constant monitoring. Every significant event—whether it's Dr. Leland updating a diagnosis or Guard Boles moving an inmate—is captured by the <b>Auto-Record Engine</b>. These logs are immutable and can only be viewed by authorized Security Staff or the Warden, ensuring an unfalsifiable record of truth.</p>
+            </div>
+        </div>
+
+        <footer>
+            Arkham Asylum Backend — Solution Architecture Diagram &bull; Gotham
+            City Council
+        </footer>
+
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+        <script>
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: "dark",
+                themeVariables: {
+                    darkMode: true,
+                    background: "#12121f",
+                    primaryColor: "#2a2a45",
+                    primaryTextColor: "#e0e0e0",
+                    lineColor: "#5a5a8a",
+                    fontSize: "14px",
+                },
+                flowchart: {
+                    curve: "basis",
+                    padding: 20,
+                    htmlLabels: true,
+                },
+            });
+        </script>
+    </body>
+</html>

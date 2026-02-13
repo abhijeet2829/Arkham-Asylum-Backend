@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arkham Asylum Backend — Technical Architecture</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 40%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 6px;
+            background: linear-gradient(90deg, #56b4e9, #3a90c0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+        .subtitle {
+            color: #8892a4;
+            font-size: 0.95rem;
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .diagram-container {
+            display: flex;
+            flex-direction: column;
+            gap: 36px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .diagram-section h2 {
+            font-size: 1.1rem;
+            color: #8892a4;
+            margin-bottom: 14px;
+            padding-left: 4px;
+            border-left: 3px solid #3a6a8b;
+            padding-left: 12px;
+        }
+        .mermaid {
+            background: #12121f;
+            border: 1px solid #2a2a45;
+            border-radius: 12px;
+            padding: 36px 24px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .tech-table {
+            margin-top: 32px;
+            width: 100%;
+            max-width: 1200px;
+            border-collapse: collapse;
+        }
+        .tech-table th, .tech-table td {
+            padding: 10px 16px;
+            text-align: left;
+            border-bottom: 1px solid #2a2a45;
+            font-size: 0.85rem;
+        }
+        .tech-table th {
+            color: #f5c542;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: #16162a;
+        }
+        .tech-table td { color: #b0b8c8; }
+        .tech-table td code {
+            background: #1e1e35;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #56b4e9;
+            font-size: 0.82rem;
+        }
+        footer {
+            margin-top: 40px;
+            color: #555;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🦇 Arkham Asylum Backend — Technical Architecture</h1>
+    <p class="subtitle">System internals for Developers, Security Engineers &amp; TAs</p>
+
+    <div class="diagram-container">
+
+        <!-- DIAGRAM 1: Request Flow & Runtime Stack -->
+        <div class="diagram-section">
+            <h2>Request Lifecycle &amp; Runtime Stack</h2>
+            <div class="mermaid">
+graph LR
+    subgraph CLIENTS["🖥️ Client Tools"]
+        direction TB
+        BROWSER["Browser<br/><code>127.0.0.1:8000</code>"]
+        POSTMAN["Postman / Insomnia<br/><code>Authorization: Bearer ...</code>"]
+        WORKBENCH["MySQL Workbench<br/><code>localhost:3306</code>"]
+    end
+
+    subgraph DJANGO["⚙️ Django Runtime — Port 8000"]
+        direction TB
+
+        subgraph MW["Middleware Pipeline"]
+            direction TB
+            SEC_MW["SecurityMiddleware"]
+            SESSION["SessionMiddleware"]
+            CORS["CorsMiddleware"]
+            COMMON["CommonMiddleware"]
+            CSRF["CsrfViewMiddleware"]
+            AUTH_MW["AuthenticationMiddleware"]
+            MSG["MessageMiddleware"]
+            XFRAME["XFrameOptionsMiddleware"]
+            TL["ThreadLocalMiddleware<br/><code>middleware.py</code>"]
+            SEC_MW --> SESSION --> CORS --> COMMON --> CSRF --> AUTH_MW --> MSG --> XFRAME --> TL
+        end
+
+        subgraph DRF["DRF Security Layer"]
+            direction TB
+            JWT["JWT Authentication<br/><code>SimpleJWT + Djoser</code>"]
+            PERMS["Permissions Check<br/><code>StrictDjangoModelPermissions</code><br/><code>IsSecurityStaff</code>"]
+            THROTTLE["Throttling<br/><code>AnonRateThrottle — 5/min</code><br/><code>UserRateThrottle — 100/min</code><br/><code>ScopedRateThrottle</code>"]
+            JWT --> PERMS --> THROTTLE
+        end
+
+        subgraph APP["Application Layer"]
+            direction TB
+            URLS["URL Router<br/><code>urls.py → DefaultRouter</code>"]
+            VIEWS["ViewSets<br/><code>SecurityViewSet</code><br/><code>InmateViewSet</code><br/><code>MedicalViewSet</code>"]
+            SERIAL["Serializers<br/><code>ModelSerializer</code><br/><code>Validation &amp; JSON</code>"]
+            URLS --> VIEWS --> SERIAL
+        end
+
+        MW --> DRF --> APP
+    end
+
+    subgraph DB["💾 Persistence Layer"]
+        MYSQL["MySQL 8.0<br/><code>arkham_registry</code><br/>Port 3306"]
+    end
+
+    BROWSER --> DJANGO
+    POSTMAN --> DJANGO
+    WORKBENCH --> DB
+    APP -->|"ORM Queries"| DB
+
+    style CLIENTS fill:#1a2535,stroke:#3a6a8b,color:#e0e0e0
+    style DJANGO fill:#1a1a3a,stroke:#4a4a7a,color:#e0e0e0
+    style MW fill:#2a1525,stroke:#6b3a52,color:#e0e0e0
+    style DRF fill:#2a2515,stroke:#8b7a3a,color:#e0e0e0
+    style APP fill:#152a20,stroke:#3a8b5a,color:#e0e0e0
+    style DB fill:#1a3a55,stroke:#3a7aab,color:#e0e0e0
+
+    style BROWSER fill:#16162a,stroke:#3a6a8b,color:#b0b8c8
+    style POSTMAN fill:#16162a,stroke:#3a6a8b,color:#b0b8c8
+    style WORKBENCH fill:#16162a,stroke:#3a6a8b,color:#b0b8c8
+    style MYSQL fill:#1a3a55,stroke:#56b4e9,color:#e0e0e0
+
+    style SEC_MW fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
+    style SESSION fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
+    style CORS fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
+    style CSRF fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
+    style AUTH_MW fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
+    style TL fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
+
+    style JWT fill:#3a3515,stroke:#8b7a3a,color:#e0d0a0
+    style PERMS fill:#3a3515,stroke:#8b7a3a,color:#e0d0a0
+    style THROTTLE fill:#3a3515,stroke:#8b7a3a,color:#e0d0a0
+
+    style URLS fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
+    style VIEWS fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
+    style SERIAL fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
+            </div>
+        </div>
+
+        <!-- DIAGRAM 2: Data Models, Signals & Audit Pipeline -->
+        <div class="diagram-section">
+            <h2>Data Models, Signals &amp; Audit Pipeline</h2>
+            <div class="mermaid">
+graph TB
+    subgraph MODELS["📊 Database Models — MySQL"]
+        direction LR
+        IP["<b>InmateProfile</b><br/>id · name · alias · cell_block"]
+        MF["<b>MedicalFile</b><br/>id · inmate_id (FK) · diagnosis · meds"]
+        AL["<b>AuditLog</b><br/>id · actor_name · action_type<br/>target_model · target_id · timestamp"]
+        IP -- "OneToOne" --> MF
+    end
+
+    subgraph VIEWSETS["🔌 ViewSets &amp; Actions"]
+        direction LR
+        SV["SecurityViewSet<br/><code>AuditLogAccessThrottle</code><br/><i>50 req/min</i>"]
+        IV["InmateViewSet<br/><code>transfer action</code><br/><code>InmateTransferThrottle</code><br/><i>10 req/min</i>"]
+        MV["MedicalViewSet<br/><code>MedicalAccessThrottle</code><br/><i>20 req/min</i>"]
+    end
+
+    subgraph AUDIT["⚡ Audit Pipeline"]
+        direction TB
+        SIG["Django Signals<br/><code>signals.py</code><br/><i>post_save · post_delete</i>"]
+        DEC["@audit_read Decorator<br/><code>decorators.py</code><br/><i>Wraps .retrieve()</i>"]
+        TLM["ThreadLocalMiddleware<br/><code>get_current_user()</code><br/><i>Resolves JWT → User</i>"]
+    end
+
+    SV --> AL
+    IV --> IP
+    MV --> MF
+
+    IP -->|"CREATE / UPDATE / DELETE"| SIG
+    MF -->|"CREATE / UPDATE / DELETE"| SIG
+
+    IV -->|"retrieve()"| DEC
+    MV -->|"retrieve()"| DEC
+
+    TLM -->|"actor_name"| SIG
+    TLM -->|"actor_name"| DEC
+
+    SIG -->|"Writes"| AL
+    DEC -->|"Writes"| AL
+
+    style MODELS fill:#1a3a55,stroke:#3a7aab,color:#e0e0e0
+    style VIEWSETS fill:#152a20,stroke:#3a8b5a,color:#e0e0e0
+    style AUDIT fill:#2a2515,stroke:#8b7a3a,color:#e0e0e0
+
+    style IP fill:#1a4a6a,stroke:#56b4e9,color:#e0e0e0
+    style MF fill:#1a4a6a,stroke:#56b4e9,color:#e0e0e0
+    style AL fill:#4a2a1a,stroke:#e07a5f,color:#e0e0e0
+
+    style SV fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
+    style IV fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
+    style MV fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
+
+    style SIG fill:#3a3515,stroke:#f5c542,color:#e0d0a0
+    style DEC fill:#3a3515,stroke:#f5c542,color:#e0d0a0
+    style TLM fill:#3a3515,stroke:#f5c542,color:#e0d0a0
+            </div>
+        </div>
+
+        <!-- DIAGRAM 3: URL Routing Map -->
+        <div class="diagram-section">
+            <h2>URL Routing Map</h2>
+            <div class="mermaid">
+graph LR
+    ROOT["127.0.0.1:8000"] --> ADMIN["/admin/<br/><i>Django Admin Panel</i>"]
+    ROOT --> AUTH_URL["/api/auth/<br/><i>Djoser + JWT</i>"]
+    ROOT --> API["/api/v1/<br/><i>arkham_app.urls</i>"]
+
+    AUTH_URL --> JWT_CREATE["/jwt/create<br/><i>Obtain tokens</i>"]
+    AUTH_URL --> JWT_REFRESH["/jwt/refresh<br/><i>Refresh access token</i>"]
+    AUTH_URL --> USERS["/users/<br/><i>Register user</i>"]
+    AUTH_URL --> USERS_ME["/users/me/<br/><i>Current user info</i>"]
+
+    API --> WELCOME["/root/<br/><i>Welcome endpoint</i>"]
+    API --> ROUTER["/default-router/"]
+
+    ROUTER --> INMATES["/inmates<br/><i>InmateViewSet</i>"]
+    ROUTER --> MEDICAL["/medical-records<br/><i>MedicalViewSet</i>"]
+    ROUTER --> SECURITY["/security-logs<br/><i>SecurityViewSet</i>"]
+
+    INMATES --> TRANSFER["/{id}/transfer<br/><i>Cell block transfer</i>"]
+
+    style ROOT fill:#2a1a3a,stroke:#6b3a8b,color:#e0e0e0
+    style ADMIN fill:#3a3515,stroke:#8b7a3a,color:#e0d0a0
+    style AUTH_URL fill:#3a1525,stroke:#8b3a62,color:#e0b0c0
+    style API fill:#152a20,stroke:#3a8b5a,color:#c0e0c0
+
+    style JWT_CREATE fill:#2a1525,stroke:#6b3a52,color:#d0b0c0
+    style JWT_REFRESH fill:#2a1525,stroke:#6b3a52,color:#d0b0c0
+    style USERS fill:#2a1525,stroke:#6b3a52,color:#d0b0c0
+    style USERS_ME fill:#2a1525,stroke:#6b3a52,color:#d0b0c0
+
+    style WELCOME fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
+    style ROUTER fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
+    style INMATES fill:#1a4a6a,stroke:#56b4e9,color:#e0e0e0
+    style MEDICAL fill:#1a4a6a,stroke:#56b4e9,color:#e0e0e0
+    style SECURITY fill:#4a2a1a,stroke:#e07a5f,color:#e0e0e0
+    style TRANSFER fill:#3a3515,stroke:#f5c542,color:#e0d0a0
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Technical Component Narratives -->
+    <div class="technical-details" style="max-width:1200px; width:100%; margin-top:40px; display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:24px;">
+        <div class="detail-card" style="background:rgba(22, 22, 42, 0.6); border:1px solid #2a2a45; border-radius:12px; padding:24px;">
+            <h4 style="color:#56b4e9; margin-bottom:12px; border-bottom:1px solid #2a2a45; padding-bottom:8px;">⚙️ Request Lifecycle</h4>
+            <p style="font-size:0.9rem; color:#b0b8c8; line-height:1.6;">Requests enter via standard HTTP but are immediately processed by a custom <b>Middleware Stack</b>. Notably, <code>ThreadLocalMiddleware</code> acts as a bridge, capturing the authenticated user from the request and making it available globally for signals and decorators deep within the application stack where the <code>request</code> object isn't natively accessible.</p>
+        </div>
+        <div class="detail-card" style="background:rgba(22, 22, 42, 0.6); border:1px solid #2a2a45; border-radius:12px; padding:24px;">
+            <h4 style="color:#56b4e9; margin-bottom:12px; border-bottom:1px solid #2a2a45; padding-bottom:8px;">🔒 DRF Security Layers</h4>
+            <p style="font-size:0.9rem; color:#b0b8c8; line-height:1.6;">Our security is multi-layered. <b>SimpleJWT</b> provides stateless authentication via Bearer tokens. <b>StrictDjangoModelPermissions</b> ensures that even standard Django permissions are applied to <code>GET</code> requests (which Django skips by default). Finally, <b>Scoped Throttling</b> provides granular protection for sensitive actions like inmate transfers and medical record access.</p>
+        </div>
+        <div class="detail-card" style="background:rgba(22, 22, 42, 0.6); border:1px solid #2a2a45; border-radius:12px; padding:24px;">
+            <h4 style="color:#56b4e9; margin-bottom:12px; border-bottom:1px solid #2a2a45; padding-bottom:8px;">⚡ The Audit Pipeline</h4>
+            <p style="font-size:0.9rem; color:#b0b8c8; line-height:1.6;">We use a hybrid approach to auditing. <b>Django Signals</b> (<code>post_save</code>, <code>post_delete</code>) automatically track any database mutations. For read operations, which don't trigger signals, we use a custom <b>@audit_read</b> decorator on ViewSet methods. Both systems rely on <code>ThreadLocalMiddleware</code> to identify the actor behind the action.</p>
+        </div>
+    </div>
+
+    <!-- File-to-Purpose Reference Table -->
+    <h2 style="color:#8892a4; margin-top:48px; margin-bottom:14px; font-size:1.1rem; border-left:3px solid #3a6a8b; padding-left:12px; max-width:1200px; width:100%;">File Reference</h2>
+    <table class="tech-table" style="max-width:1200px;">
+        <thead>
+            <tr>
+                <th>File</th>
+                <th>Layer</th>
+                <th>Purpose</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td><code>settings.py</code></td><td>Config</td><td>DRF settings, JWT lifetimes, throttle rates, middleware stack, database connection, CORS origins</td></tr>
+            <tr><td><code>urls.py</code> (project)</td><td>Routing</td><td>Root URL conf — admin, Djoser auth, app include under <code>/api/v1/</code></td></tr>
+            <tr><td><code>urls.py</code> (app)</td><td>Routing</td><td>DRF DefaultRouter registering 3 ViewSets + welcome endpoint</td></tr>
+            <tr><td><code>views.py</code></td><td>Application</td><td>SecurityViewSet, InmateViewSet (with transfer action), MedicalViewSet</td></tr>
+            <tr><td><code>serializers.py</code></td><td>Application</td><td>ModelSerializers for AuditLog, InmateProfile, MedicalFile — all fields exposed</td></tr>
+            <tr><td><code>models.py</code></td><td>Data</td><td>InmateProfile, MedicalFile (OneToOne → Inmate), AuditLog (ordered by -timestamp)</td></tr>
+            <tr><td><code>permissions.py</code></td><td>Security</td><td>StrictDjangoModelPermissions (adds GET check), IsSecurityStaff (group-based)</td></tr>
+            <tr><td><code>throttles.py</code></td><td>Security</td><td>InmateTransferThrottle (10/min), MedicalAccessThrottle (20/min), AuditLogAccessThrottle (50/min)</td></tr>
+            <tr><td><code>middleware.py</code></td><td>Security</td><td>ThreadLocalMiddleware — resolves JWT to user, exposes <code>get_current_user()</code> globally</td></tr>
+            <tr><td><code>signals.py</code></td><td>Audit</td><td>post_save / post_delete signals on InmateProfile &amp; MedicalFile → AuditLog entries</td></tr>
+            <tr><td><code>decorators.py</code></td><td>Audit</td><td><code>@audit_read</code> decorator — logs READ actions when <code>.retrieve()</code> returns 200</td></tr>
+            <tr><td><code>apps.py</code></td><td>Config</td><td>App config — imports signals on <code>ready()</code></td></tr>
+        </tbody>
+    </table>
+
+    <footer>Arkham Asylum Backend — Technical Architecture Diagram &bull; Developer Reference</footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                darkMode: true,
+                background: '#12121f',
+                primaryColor: '#2a2a45',
+                primaryTextColor: '#e0e0e0',
+                lineColor: '#5a5a8a',
+                fontSize: '13px'
+            },
+            flowchart: {
+                curve: 'basis',
+                padding: 16,
+                htmlLabels: true,
+                defaultRenderer: 'dagre'
+            }
+        });
+    </script>
+</body>
+</html>

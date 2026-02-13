@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" />
 </p>
 
-<h1 align="center">🦇 Arkham Asylum Backend - Inmate Management System</h1>
+<h1 align="center">🦇 Test Backend - Inmate Management System</h1>
 
 <p align="center">
   <em>A secure, auditable backend API for managing Gotham's most dangerous inmates.</em>

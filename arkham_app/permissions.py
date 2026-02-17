@@ -19,3 +19,8 @@ class IsSecurityStaff(BasePermission):
             return True
 
         return request.user.groups.filter(name='Security Staff').exists()
+
+
+class IsSuperAdmin(BasePermission):
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_superuser)

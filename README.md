@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" />
 </p>
 
-<h1 align="center">🦇 Test Backend - Inmate Management System</h1>
+<h1 align="center">🦇 Arkham Asylum Backend - Inmate Management System</h1>
 
 <p align="center">
   <em>A secure, auditable backend API for managing Gotham's most dangerous inmates.</em>
@@ -36,17 +36,6 @@ The system is complemented by high-fidelity visualizers. **Note:** Since GitHub 
 
 <br>
 
-## 👥 User Roles & Permissions
-
-| Role | Character | Access Level |
-|------|-----------|-------------|
-| **Super Admin** | Warden (Quincy Sharp) | Full CRUD on all models |
-| **Medical Staff** | Dr. Leland | Read/Update medical records |
-| **Security Staff** | Guard Boles | View inmates, transfer cell blocks (via custom `IsSecurityStaff` permission) |
-| **Public Visitor** | General Public | View non-sensitive inmate info only (read-only) |
-
-<br>
-
 ## 🛡️ Security Features
 
 ### Authentication
@@ -67,38 +56,6 @@ The system is complemented by high-fidelity visualizers. **Note:** Since GitHub 
 ### Role-Based Access Control
 - **`StrictDjangoModelPermissions`** — Enforces Django's model-level permissions, including `GET` (read), which DRF skips by default.
 - **`IsSecurityStaff`** — Custom permission for guarding the inmate transfer action.
-
-<br>
-
-## 📊 Database Schema
-
-```mermaid
-erDiagram
-    INMATE_PROFILE {
-        int id PK
-        string name
-        string alias
-        string cell_block
-    }
-
-    MEDICAL_FILE {
-        int id PK
-        int inmate_id FK "unique"
-        string diagnosis
-        string meds
-    }
-
-    AUDIT_LOG {
-        int id PK
-        string actor_name
-        string action_type
-        string target_model
-        int target_id
-        datetime timestamp
-    }
-
-    INMATE_PROFILE ||--|| MEDICAL_FILE : "has one"
-```
 
 <br>
 
@@ -175,8 +132,8 @@ Each log entry captures: **who** did it (`actor_name`), **what** they did (`acti
 
 ```bash
 # Clone the repository
-git clone https://github.com/<your-username>/arkham-asylum-backend.git
-cd arkham-asylum-backend
+git clone https://github.com/abhijeet2829/Arkham-Asylum-Backend
+cd Arkham-Asylum-Backend
 
 # Install dependencies
 pipenv install

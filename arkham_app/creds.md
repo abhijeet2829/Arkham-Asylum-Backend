@@ -4,18 +4,11 @@
 
 <br>
 
-## Django Admin Panel
-
-| Username | Password |
-|----------|----------|
-| bruce | batman |
-
-<br>
-
 ## Super Admin
 
 | Username | Password | Notes |
 |----------|----------|-------|
+| bruce | batman | Bruce Wayne — Primary super admin |
 | Warden | DN09r;naCtj | Quincy Sharp — Full system access |
 | ArkhamDirector | Gh0tham!Ctrl9 | Hugo Strange — Backup super admin |
 

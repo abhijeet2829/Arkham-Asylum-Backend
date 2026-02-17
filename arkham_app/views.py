@@ -2,12 +2,13 @@ from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from .models import AuditLog, InmateProfile, MedicalFile
-from .serializers import AuditLogSerializer, InmateProfileSerializer, MedicalFileSerializer
-from .permissions import StrictDjangoModelPermissions, IsSecurityStaff
+from .serializers import AuditLogSerializer, InmateProfileSerializer, MedicalFileSerializer, UserSerializer
+from .permissions import StrictDjangoModelPermissions, IsSecurityStaff, IsSuperAdmin
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .decorators import audit_read
 from .throttles import InmateTransferThrottle, MedicalAccessThrottle, AuditLogAccessThrottle
+from django.contrib.auth.models import User
 
 
 
@@ -59,3 +60,10 @@ class MedicalViewSet(viewsets.ModelViewSet):
     @audit_read(MedicalFile)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+
+class UserGroupViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsSuperAdmin]
+    http_method_names = ['get', 'patch']

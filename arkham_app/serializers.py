@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import AuditLog, InmateProfile, MedicalFile
+from django.contrib.auth.models import User, Group
 
 class AuditLogSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,3 +16,15 @@ class MedicalFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicalFile
         fields = "__all__"
+
+
+class UserSerializer(serializers.ModelSerializer):
+    groups = serializers.SlugRelatedField(
+        many=True,
+        slug_field='name',
+        queryset=Group.objects.all()
+    )
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'groups']

@@ -77,7 +77,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'arkham_registry',
         'USER': 'root',
-        'PASSWORD': 'password123',
+        'PASSWORD': 'pass123',
         'HOST': 'localhost',
         'PORT': '3306',
     }

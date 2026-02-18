@@ -27,6 +27,7 @@ class InmateViewSet(viewsets.ModelViewSet):
     queryset = InmateProfile.objects.all()
     permission_classes = [IsAuthenticated, StrictDjangoModelPermissions]
     serializer_class = InmateProfileSerializer
+    http_method_names = ['get', 'post', 'patch']
     
     @audit_read(InmateProfile)
     def retrieve(self, request, *args, **kwargs):

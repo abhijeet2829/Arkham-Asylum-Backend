@@ -1,9 +1,18 @@
 from django.db import models
 
 class InmateProfile(models.Model):
+    STATUS_CHOICES = [
+        ('ACTIVE', 'Active'),
+        ('DISCHARGED', 'Discharged'),
+        ('TRANSFERRED', 'Transferred'),
+        ('ESCAPED', 'Escaped'),
+        ('DECEASED', 'Deceased'),
+    ]
+
     name = models.CharField(max_length=100)
     alias = models.CharField(max_length=50)
     cell_block = models.CharField(max_length=20)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
     
     def __str__(self):
         return self.name

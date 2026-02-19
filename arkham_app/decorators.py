@@ -18,7 +18,7 @@ def audit_read(model_class):
 
                         AuditLog.objects.create(
                             actor_name=actor_name,
-                            action_type="READ",
+                            action_type="DETAILED_READ",
                             target_model=model_class.__name__,
                             target_id=target_id,
                             timestamp=datetime.datetime.now()

@@ -9,9 +9,17 @@ class InmateProfile(models.Model):
         ('DECEASED', 'Deceased'),
     ]
 
+    CELL_BLOCK_CHOICES = [
+        ('Block-A', 'Block A'),
+        ('Block-B', 'Block B'),
+        ('Block-C', 'Block C'),
+        ('Block-D', 'Block D'),
+        ('Block-E', 'Block E'),
+    ]
+
     name = models.CharField(max_length=100)
     alias = models.CharField(max_length=50)
-    cell_block = models.CharField(max_length=20)
+    cell_block = models.CharField(max_length=20, choices=CELL_BLOCK_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
     
     def __str__(self):
@@ -28,8 +36,15 @@ class MedicalFile(models.Model):
     
     
 class AuditLog(models.Model):
+    ACTION_CHOICES = [
+        ('DETAILED_READ', 'Detailed Read'),
+        ('UPDATE', 'Update'),
+        ('CREATE', 'Create'),
+        ('DELETE', 'Delete'),
+    ]
+
     actor_name = models.CharField(max_length=100)
-    action_type = models.CharField(max_length=50)
+    action_type = models.CharField(max_length=50, choices=ACTION_CHOICES)
     target_model = models.CharField(max_length=50)  # InmateProfile/MedicalFile
     target_id = models.PositiveIntegerField()
     timestamp = models.DateTimeField(auto_now_add=True)

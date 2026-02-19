@@ -1,210 +1,92 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/Django-6.0-092E20?style=for-the-badge&logo=django&logoColor=white" />
-  <img src="https://img.shields.io/badge/DRF-3.x-DC382D?style=for-the-badge&logo=django&logoColor=white" />
-  <img src="https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white" />
-  <img src="https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" />
-</p>
-
-<h1 align="center">🦇 Arkham Asylum Backend - Inmate Management System</h1>
-
-<p align="center">
-  <em>A secure, auditable backend API for managing Gotham's most dangerous inmates.</em>
-</p>
-
-<p align="center">
-  Built with DRF · JWT Auth · RBAC · Immutable Audit Logging
-</p>
-
-<br>
-
-## 📖 The Story
-
-After a series of high-profile breakouts and internal scandals, the **Gotham City Council** forces Warden Quincy Sharp to modernize Arkham's inmate systems with a secure, auditable backend service — replacing paper files and ad-hoc spreadsheets.
-
-This project models a minimal but realistic slice of that system. The goal is to **track inmates**, their public-facing details (name, aliases, cell block) and tightly controlled **medical records**, while recording every sensitive action in an **immutable audit log**.
-
-> _One missing prescription for Jonathan Crane or a misrouted transfer for Harvey Dent can mean another headline-making disaster._
-
-<br>
-
-## 🏢 Project Overview
-The system is complemented by high-fidelity visualizers. **Note:** Since GitHub does not render HTML files directly, please download these files and open them in your local browser for the full interactive experience...
-
-*   [**Solution Architecture**](./solution_architecture.html) — High level business flow and user roles.
-*   [**Technical Architecture**](./technical_architecture.html) — Deep dive into request lifecycle, middlewares, and API routing.
-*   [**Database ER Model**](./database_er_model.html) — Entity Relationship diagram and field level data dictionary.
-
-<br>
-
-## 🛡️ Security Features
-
-### Authentication
-- **JWT tokens** via [SimpleJWT](https://django-rest-framework-simplejwt.readthedocs.io/) + [Djoser](https://djoser.readthedocs.io/)
-- Access token lifetime: **45 minutes**
-- Refresh token lifetime: **4 days**
-
-### Rate Limiting (Throttling)
-
-| Scope | Rate | Applied To |
-|-------|------|-----------|
-| Anonymous users | `5/min` | All endpoints (global) |
-| Authenticated users | `100/min` | All endpoints (global) |
-| Inmate Transfer | `10/min` | `POST /inmates/{id}/transfer` |
-| Medical Records | `20/min` | All medical record endpoints |
-| Audit Logs | `50/min` | All audit log endpoints |
-
-### Role-Based Access Control
-- **`StrictDjangoModelPermissions`** — Enforces Django's model-level permissions, including `GET` (read), which DRF skips by default.
-- **`IsSecurityStaff`** — Custom permission for guarding the inmate transfer action.
-
-<br>
-
 ## 🔌 API Endpoints
 
-Base URL: `http://127.0.0.1:8000/api/v1/`
-
-### Authentication (Djoser + JWT)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/auth/jwt/create` | Obtain JWT token pair |
-| `POST` | `/api/auth/jwt/refresh` | Refresh access token |
-| `POST` | `/api/auth/users/` | Register a new user |
-| `GET` | `/api/auth/users/me/` | View current authenticated user's info |
+Base URL: `http://127.0.0.1:8001`
 
 <br>
 
-### Inmate Management
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/default-router/inmates` | List all inmates |
-| `GET` | `/api/v1/default-router/inmates/{id}` | Retrieve inmate details |
-| `POST` | `/api/v1/default-router/inmates` | Create inmate profile |
-| `PUT` | `/api/v1/default-router/inmates/{id}` | Update inmate profile |
-| `DELETE` | `/api/v1/default-router/inmates/{id}` | Delete inmate profile |
-| `POST` | `/api/v1/default-router/inmates/{id}/transfer` | Transfer inmate cell block |
+### 0. Health Check
+
+| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
+|---|--------|----------|-------------|----------------|-------------|
+| 0 | `GET` | `/api/v1/root/` | Anyone (public) | — | Returns a welcome message confirming the server is alive. |
 
 <br>
 
-### Medical Records
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/default-router/medical-records` | List all medical records |
-| `GET` | `/api/v1/default-router/medical-records/{id}` | Retrieve medical record |
-| `POST` | `/api/v1/default-router/medical-records` | Create medical record |
-| `PUT` | `/api/v1/default-router/medical-records/{id}` | Update medical record |
-| `DELETE` | `/api/v1/default-router/medical-records/{id}` | Delete medical record |
+### 1. Registration
+
+| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
+|---|--------|----------|-------------|----------------|-------------|
+| 1 | `POST` | `/api/auth/users/` | Anyone (public) | `{"username": "JohnDoe", "email": "john@gotham.com", "password": "SecureP@ss1"}` | Register a new user account. User starts with zero group clearance (orphan). |
 
 <br>
 
-### Audit & Watchtower
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/default-router/security-logs` | List all audit logs |
-| `GET` | `/api/v1/default-router/security-logs/{id}` | Retrieve audit log entry |
+### 2. Authentication
+
+| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
+|---|--------|----------|-------------|----------------|-------------|
+| 2 | `POST` | `/api/auth/jwt/create/` | Any registered user | `{"username": "JohnDoe", "password": "SecureP@ss1"}` | Login — returns `access` (45 min) and `refresh` (4 days) tokens. |
+| 3 | `POST` | `/api/auth/jwt/refresh/` | Any registered user | `{"refresh": "<refresh_token>"}` | Get a new access token using a valid refresh token. |
+| 4 | `POST` | `/api/auth/jwt/verify/` | Any registered user | `{"token": "<access_token>"}` | Verify if a given token is still valid. Returns 200 or 401. |
 
 <br>
 
-## 🔍 Audit Logging
+### 3. Profile & Password
 
-The system **automatically records** every significant action:
-
-| Trigger | Actions Logged | Mechanism |
-|---------|---------------|-----------|
-| Create/Update/Delete on `InmateProfile` or `MedicalFile` | `CREATE`, `UPDATE`, `DELETE` | Django Signals (`signals.py`) |
-| Read on `InmateProfile` or `MedicalFile` | `READ` | Decorator (`@audit_read` in `decorators.py`) |
-
-Each log entry captures: **who** did it (`actor_name`), **what** they did (`action_type`), **which record** (`target_model` + `target_id`), and **when** (`timestamp`).
+| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
+|---|--------|----------|-------------|----------------|-------------|
+| 5 | `GET` | `/api/auth/users/me/` | Any authenticated user | — | View own profile (username, email, id). |
+| 6 | `PATCH` | `/api/auth/users/me/` | Any authenticated user | `{"email": "new@gotham.com"}` | Update own profile details (username, email). |
+| 7 | `POST` | `/api/auth/users/set_password/` | Any authenticated user | `{"current_password": "OldP@ss", "new_password": "NewP@ss1"}` | Change own password. Requires current password for identity verification. |
 
 <br>
 
-## 🏁 Getting Started
+### 4. Inmate Management
 
-### Prerequisites
-- Python 3.12+
-- MySQL 8.0+
-- Pipenv
-- pip (Python package manager)
-- Git
-- A REST client like Postman or Insomnia (for testing API endpoints)
-- MySQL Workbench or any MySQL GUI client (optional, for inspecting the database)
+| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
+|---|--------|----------|-------------|----------------|-------------|
+| 8 | `GET` | `/api/v1/default-router/inmates` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | List all inmates with name, alias, cell block, and status. |
+| 9 | `GET` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | Retrieve a single inmate's full details. Triggers audit log. |
+| 10 | `POST` | `/api/v1/default-router/inmates` | Super Admin | `{"name": "Bane", "alias": "The Man Who Broke the Bat", "cell_block": "Block-D"}` | Admit a new inmate. Status defaults to `ACTIVE`. |
+| 11 | `PATCH` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff | `{"status": "DISCHARGED"}` | Update inmate details or soft-delete via status change. |
+| 12 | `POST` | `/api/v1/default-router/inmates/{id}/transfer` | Super Admin, Security Staff | `{"cell_block": "Block-C"}` | Transfer inmate to a different cell block. Throttled (10/min). |
 
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/abhijeet2829/Arkham-Asylum-Backend
-cd Arkham-Asylum-Backend
-
-# Install dependencies
-pipenv install
-
-# Configure MySQL database
-# Create a MySQL database named 'arkham_registry'
-# Then update arkham_pm/settings.py with your MySQL credentials (USER, PASSWORD, HOST, PORT)
-
-# Run migrations
-pipenv run python manage.py migrate
-
-# Create a superuser (Warden)
-pipenv run python manage.py createsuperuser
-
-# Start the development server
-pipenv run python manage.py runserver
-```
-
-### Setting Up Roles
-
-> **Important:** User groups, permissions, and role assignments are stored in the **database**, not in the codebase. They do **not** ship with the GitHub repo. You must configure them manually after running migrations.
-
-1. Log into the Django Admin panel at `http://127.0.0.1:8000/admin/`
-2. Navigate to **Groups** and create the following 4 groups:
-   - `Super Admin`
-   - `Medical Staff`
-   - `Security Staff`
-   - `Public Visitor`
-3. Assign the appropriate **model permissions** to each group:
-   - **Super Admin** — All permissions on `InmateProfile`, `MedicalFile`, and `AuditLog`
-   - **Medical Staff** — View + Change permissions on `MedicalFile`; View on `InmateProfile`
-   - **Security Staff** — View + Change permissions on `InmateProfile` (cell block transfers are handled by the custom `IsSecurityStaff` permission in code)
-   - **Public Visitor** — View permission on `InmateProfile` only
-4. Create users via the admin panel and assign them to the relevant group(s). Refer to `arkham_app/creds.md` for sample usernames, passwords, and their group assignments
+> **Note:** `PUT` and `DELETE` are blocked via `http_method_names`. Inmates are never hard-deleted — use `PATCH {"status": "DISCHARGED"}` for soft-delete (FPH standard).
 
 <br>
 
-## ⚙️ Tech Stack
+### 5. Medical Records
 
-| Layer | Technology |
-|-------|-----------|
-| **Framework** | Django 6.0 + Django REST Framework |
-| **Authentication** | SimpleJWT + Djoser |
-| **Database** | MySQL 8.0 |
-| **Rate Limiting** | DRF Throttling (LocMemCache) |
-| **CORS** | django-cors-headers |
-| **AI Assistance** | AntiGravity (Google AI Pro) + Perplexity Pro + OpenClaw |
+| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
+|---|--------|----------|-------------|----------------|-------------|
+| 13 | `GET` | `/api/v1/default-router/medical-records` | Super Admin, Medical Staff | — | List all medical records. Throttled (20/min). |
+| 14 | `GET` | `/api/v1/default-router/medical-records/{id}` | Super Admin, Medical Staff | — | Retrieve a single medical record. Triggers audit log. |
+| 15 | `POST` | `/api/v1/default-router/medical-records` | Super Admin, Medical Staff | `{"inmate": 4, "diagnosis": "DID", "meds": "Risperidone"}` | Create a medical file for an existing inmate. |
+| 16 | `PATCH` | `/api/v1/default-router/medical-records/{id}` | Super Admin, Medical Staff | `{"meds": "Updated prescription"}` | Update diagnosis or medication. |
+| 17 | `DELETE` | `/api/v1/default-router/medical-records/{id}` | Super Admin | — | Delete a medical record. |
 
-<br>
-
-## 📌 Scope
-
-### In Scope
-- ✅ Centralized JWT authentication for all API access
-- ✅ Secure REST APIs for inmate profiles and medical files
-- ✅ Role-based permissions (Warden, Medical Staff, Guards, Visitors)
-- ✅ Persistent audit logging of all security-relevant actions
-- ✅ Rate limiting to prevent brute-force and abuse
-
-### Out of Scope
-- ❌ Public user self-registration and password-reset flows
-- ❌ CRUD APIs for managing roles/groups
-- ❌ Production-grade frontend or multi-tenant architecture
-- ❌ Multi-environment deployment automation
+> **Note:** `PUT` is blocked via `http_method_names`. Use `PATCH` for partial updates — overwriting an entire medical record in one shot is not a safe practice in an FPH.
 
 <br>
 
-<p align="center">
-  <strong>🦇 "It's not who I am underneath, but what I do that defines me." 🦇</strong>
-</p>
+### 6. User Group Management
 
-<p align="center">
-  <em>Built as a learning project to explore Django REST Framework security patterns.</em>
-</p>
+| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
+|---|--------|----------|-------------|----------------|-------------|
+| 18 | `GET` | `/api/v1/default-router/user-groups` | Super Admin | — | List all registered users with their group assignments and active status. |
+| 19 | `GET` | `/api/v1/default-router/user-groups/{id}` | Super Admin | — | View a specific user's details (username, email, groups, is_active). |
+| 20 | `PATCH` | `/api/v1/default-router/user-groups/{id}` | Super Admin | `{"groups": ["Medical Staff"]}` | Assign/change a user's group clearance. |
+| 21 | `PATCH` | `/api/v1/default-router/user-groups/{id}` | Super Admin | `{"groups": []}` | Revoke all group clearance (make user an orphan). |
+| 22 | `PATCH` | `/api/v1/default-router/user-groups/{id}` | Super Admin | `{"is_active": false}` | Soft-delete a user (blocks login while preserving records). |
+
+> **Note:** `POST` and `DELETE` are blocked via `http_method_names`. User creation is handled via Djoser registration (#1). Users are never hard-deleted.
+
+<br>
+
+### 7. Audit Logs
+
+| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
+|---|--------|----------|-------------|----------------|-------------|
+| 23 | `GET` | `/api/v1/default-router/security-logs` | Super Admin | — | List all audit entries (sorted newest first). Throttled (50/min). |
+| 24 | `GET` | `/api/v1/default-router/security-logs/{id}` | Super Admin | — | Retrieve a specific audit log entry. |
+
+> **Note:** Audit logs are auto-generated and **immutable**. All write methods (`POST`, `PUT`, `PATCH`, `DELETE`) are blocked via `http_method_names`. CUD operations are logged via Django Signals; Read operations via the `@audit_read` decorator.

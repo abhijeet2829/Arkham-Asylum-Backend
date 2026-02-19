@@ -21,6 +21,7 @@ class SecurityViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, StrictDjangoModelPermissions]
     serializer_class = AuditLogSerializer
     throttle_classes = [AuditLogAccessThrottle]
+    http_method_names = ['get']
 
 
 class InmateViewSet(viewsets.ModelViewSet):
@@ -57,6 +58,7 @@ class MedicalViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, StrictDjangoModelPermissions]
     serializer_class = MedicalFileSerializer
     throttle_classes = [MedicalAccessThrottle]
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     @audit_read(MedicalFile)
     def retrieve(self, request, *args, **kwargs):

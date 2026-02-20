@@ -2,13 +2,15 @@ from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from .models import AuditLog, InmateProfile, MedicalFile
-from .serializers import AuditLogSerializer, InmateProfileSerializer, MedicalFileSerializer, UserSerializer
+from .serializers import AuditLogSerializer, InmateProfileSerializer, MedicalFileSerializer, UserSerializer, InmateDetailSerializer
 from .permissions import StrictDjangoModelPermissions, IsSecurityStaff, IsSuperAdmin
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .decorators import audit_read
 from .throttles import InmateTransferThrottle, MedicalAccessThrottle, AuditLogAccessThrottle
 from django.contrib.auth.models import User
+from .filters import InmateProfileFilter
+from .pagination import ArkhamPagination
 
 
 
@@ -28,7 +30,15 @@ class InmateViewSet(viewsets.ModelViewSet):
     queryset = InmateProfile.objects.all()
     permission_classes = [IsAuthenticated, StrictDjangoModelPermissions]
     serializer_class = InmateProfileSerializer
+    filterset_class = InmateProfileFilter
+    pagination_class = ArkhamPagination
     http_method_names = ['get', 'post', 'patch']
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            if not self.request.user.groups.filter(name__in=['Public Visitor', 'Security Staff']).exists():
+                return InmateDetailSerializer
+        return super().get_serializer_class()
     
     @audit_read(InmateProfile)
     def retrieve(self, request, *args, **kwargs):
@@ -57,6 +67,7 @@ class MedicalViewSet(viewsets.ModelViewSet):
     queryset = MedicalFile.objects.all()
     permission_classes = [IsAuthenticated, StrictDjangoModelPermissions]
     serializer_class = MedicalFileSerializer
+    pagination_class = ArkhamPagination
     throttle_classes = [MedicalAccessThrottle]
     http_method_names = ['get', 'post', 'patch', 'delete']
 

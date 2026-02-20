@@ -45,7 +45,7 @@ Base URL: `http://127.0.0.1:8001`
 | # | Method | Endpoint | Who Can Call | Sample Payload | Description |
 |---|--------|----------|-------------|----------------|-------------|
 | 8 | `GET` | `/api/v1/default-router/inmates` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | List all inmates with name, alias, cell block, and status. |
-| 9 | `GET` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | Retrieve a single inmate's full details. Triggers audit log. |
+| 9 | `GET` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | Retrieve single inmate. Authorized clinical/admin staff see nested Medical Record; Security/Visitors see flat profile. |
 | 10 | `POST` | `/api/v1/default-router/inmates` | Super Admin | `{"name": "Bane", "alias": "The Man Who Broke the Bat", "cell_block": "Block-D"}` | Admit a new inmate. Status defaults to `ACTIVE`. |
 | 11 | `PATCH` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff | `{"status": "DISCHARGED"}` | Update inmate details or soft-delete via status change. |
 | 12 | `POST` | `/api/v1/default-router/inmates/{id}/transfer` | Super Admin, Security Staff | `{"cell_block": "Block-C"}` | Transfer inmate to a different cell block. Throttled (10/min). |

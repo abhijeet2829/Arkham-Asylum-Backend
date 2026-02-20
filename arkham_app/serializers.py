@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import AuditLog, InmateProfile, MedicalFile
 from django.contrib.auth.models import User, Group
 
+
 class AuditLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = AuditLog
@@ -16,6 +17,13 @@ class MedicalFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = MedicalFile
         fields = "__all__"
+
+class InmateDetailSerializer(serializers.ModelSerializer):
+    medical_record = MedicalFileSerializer(source='medicalfile', read_only=True)
+
+    class Meta:
+        model = InmateProfile
+        fields = ['id', 'name', 'alias', 'cell_block', 'status', 'medical_record']
 
 
 class UserSerializer(serializers.ModelSerializer):

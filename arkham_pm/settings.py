@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'djoser',
     'corsheaders',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -138,7 +139,12 @@ REST_FRAMEWORK = {
         'inmate_transfer': '10/min',
         'medical_file_access': '20/min',
         'audit_log_access': '50/min',
-    }
+    },
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
 }
 
 SIMPLE_JWT = {

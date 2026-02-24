@@ -47,10 +47,12 @@ Base URL: `http://127.0.0.1:8001`
 | 8 | `GET` | `/api/v1/default-router/inmates` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | List all inmates with name, alias, cell block, and status. |
 | 9 | `GET` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | Retrieve single inmate. Authorized clinical/admin staff see nested Medical Record; Security/Visitors see flat profile. |
 | 10 | `POST` | `/api/v1/default-router/inmates` | Super Admin | `{"name": "Bane", "alias": "The Man Who Broke the Bat", "cell_block": "Block-D"}` | Admit a new inmate. Status defaults to `ACTIVE`. |
-| 11 | `PATCH` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff | `{"status": "DISCHARGED"}` | Update inmate details or soft-delete via status change. |
-| 12 | `POST` | `/api/v1/default-router/inmates/{id}/transfer` | Super Admin, Security Staff | `{"cell_block": "Block-C"}` | Transfer inmate to a different cell block. Throttled (10/min). |
+| 11 | `PATCH` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff | `{"cell_block": "Block-C"}` | Update inmate details. Security Staff can **only** update `cell_block` (with **Transfer Safety Clearance**, see note). Super Admins can update any field. |
 
-> **Note:** `PUT` and `DELETE` are blocked via `http_method_names`. Inmates are never hard-deleted — use `PATCH {"status": "DISCHARGED"}` for soft-delete (FPH standard).
+> **Note:** `PUT` and `DELETE` are blocked via `http_method_names`. Inmates are never hard-deleted — use `PATCH {"status": "DISCHARGED"}` for soft-delete (FPH standard). When **Security Staff** patches `cell_block`, the **Transfer Safety Engine** requires:
+>
+> 1. A **Medical Staff** member must have reviewed or updated the inmate's medical file within the last **7 days**.
+> 2. A **Super Admin** must have viewed the inmate's medical file within the last **24 hours**.
 
 <br>
 
@@ -58,13 +60,13 @@ Base URL: `http://127.0.0.1:8001`
 
 | # | Method | Endpoint | Who Can Call | Sample Payload | Description |
 |---|--------|----------|-------------|----------------|-------------|
-| 13 | `GET` | `/api/v1/default-router/medical-records` | Super Admin, Medical Staff | — | List all medical records. Throttled (20/min). |
-| 14 | `GET` | `/api/v1/default-router/medical-records/{id}` | Super Admin, Medical Staff | — | Retrieve a single medical record. Triggers audit log. |
-| 15 | `POST` | `/api/v1/default-router/medical-records` | Super Admin, Medical Staff | `{"inmate": 4, "diagnosis": "DID", "meds": "Risperidone"}` | Create a medical file for an existing inmate. |
+| 13 | `GET` | `/api/v1/default-router/medical-records` | Super Admin, Medical Staff | — | List medical records. Super Admins see all; Medical Staff see only files assigned to them. Throttled (20/min). |
+| 14 | `GET` | `/api/v1/default-router/medical-records/{id}` | Super Admin, Medical Staff | — | Retrieve a single medical record. Only accessible if assigned to the requesting doctor. Triggers audit log. |
+| 15 | `POST` | `/api/v1/default-router/medical-records` | Super Admin, Medical Staff | `{"inmate": 4, "diagnosis": "DID", "meds": "Risperidone", "assigned_to": 2}` | Create a medical file for an existing inmate. `assigned_to` links the file to a specific doctor (User ID). |
 | 16 | `PATCH` | `/api/v1/default-router/medical-records/{id}` | Super Admin, Medical Staff | `{"meds": "Updated prescription"}` | Update diagnosis or medication. |
 | 17 | `DELETE` | `/api/v1/default-router/medical-records/{id}` | Super Admin | — | Delete a medical record. |
 
-> **Note:** `PUT` is blocked via `http_method_names`. Use `PATCH` for partial updates — overwriting an entire medical record in one shot is not a safe practice in an FPH.
+> **Note:** `PUT` is blocked via `http_method_names`. Medical records use **Clinical Ownership** — each file is linked to a specific doctor via `assigned_to`, and Medical Staff can only access their own assigned files. Super Admins bypass this restriction.
 
 <br>
 

@@ -1,7 +1,7 @@
 from functools import wraps
 from .models import AuditLog
 from .middleware import get_current_user
-import datetime
+from django.utils import timezone
 
 def audit_read(model_class):
     def decorator(func):
@@ -15,13 +15,15 @@ def audit_read(model_class):
                     if target_id:
                         user = get_current_user()
                         actor_name = user.username if user else "Anonymous"
+                        actor_group = user.groups.first().name if user and user.groups.exists() else "Super Admin"
 
                         AuditLog.objects.create(
                             actor_name=actor_name,
+                            actor_group=actor_group,
                             action_type="DETAILED_READ",
                             target_model=model_class.__name__,
                             target_id=target_id,
-                            timestamp=datetime.datetime.now()
+                            timestamp=timezone.now()
                         )
                 except Exception as e:
                     print(f"Audit Log Error: {e}")

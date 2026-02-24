@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class InmateProfile(models.Model):
     STATUS_CHOICES = [
@@ -30,9 +31,10 @@ class MedicalFile(models.Model):
     inmate = models.OneToOneField(InmateProfile, on_delete=models.CASCADE)
     diagnosis = models.CharField(max_length=100)
     meds = models.CharField(max_length=150)
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_files')
     
     def __str__(self):
-        return f"Medical Record for {self.inmate.name}"
+        return f"{self.inmate.name}"
     
     
 class AuditLog(models.Model):
@@ -44,6 +46,7 @@ class AuditLog(models.Model):
     ]
 
     actor_name = models.CharField(max_length=100)
+    actor_group = models.CharField(max_length=50, default='Unknown')
     action_type = models.CharField(max_length=50, choices=ACTION_CHOICES)
     target_model = models.CharField(max_length=50)  # InmateProfile/MedicalFile
     target_id = models.PositiveIntegerField()

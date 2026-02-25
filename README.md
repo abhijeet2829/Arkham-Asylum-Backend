@@ -44,15 +44,23 @@ Base URL: `http://127.0.0.1:8001`
 
 | # | Method | Endpoint | Who Can Call | Sample Payload | Description |
 |---|--------|----------|-------------|----------------|-------------|
-| 8 | `GET` | `/api/v1/default-router/inmates` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | List all inmates with name, alias, cell block, and status. |
-| 9 | `GET` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | Retrieve single inmate. Authorized clinical/admin staff see nested Medical Record; Security/Visitors see flat profile. |
-| 10 | `POST` | `/api/v1/default-router/inmates` | Super Admin | `{"name": "Bane", "alias": "The Man Who Broke the Bat", "cell_block": "Block-D"}` | Admit a new inmate. Status defaults to `ACTIVE`. |
+| 8 | `GET` | `/api/v1/default-router/inmates` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | List all inmates with name, alias, cell block (as name string), and status. Supports `?cell_block=Block-A` filter. |
+| 9 | `GET` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | Retrieve single inmate. Authorized clinical/admin staff see nested Medical Record (with `referral_diagnosis` and `internal_diagnosis`); Security/Visitors see flat profile. |
+| 10 | `POST` | `/api/v1/default-router/inmates` | Super Admin | `{"name": "Bane", "alias": "The Venom User", "cell_block": "Block-D", "referral_diagnosis": "Venom dependency"}` | Admit a new inmate. `referral_diagnosis` is **required** (Initial Diagnosis Presence rule). Automatically creates a linked MedicalFile. Status defaults to `ACTIVE`. |
 | 11 | `PATCH` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff | `{"cell_block": "Block-C"}` | Update inmate details. Security Staff can **only** update `cell_block` (with **Transfer Safety Clearance**, see note). Super Admins can update any field. |
 
-> **Note:** `PUT` and `DELETE` are blocked via `http_method_names`. Inmates are never hard-deleted — use `PATCH {"status": "DISCHARGED"}` for soft-delete (FPH standard). When **Security Staff** patches `cell_block`, the **Transfer Safety Engine** requires:
+> **Note:** `PUT` and `DELETE` are blocked via `http_method_names`. Inmates are never hard-deleted — use `PATCH {"status": "DISCHARGED"}` for soft-delete (FPH standard).
 >
+> **Admission Engine (POST):** Three checks run before any inmate is admitted:
+> 1. **Duplicate Identity Check** — `name` and `alias` must be unique (model-level constraint).
+> 2. **Cell Block Capacity** — The target block's `current_count` must be below `max_capacity`. If full, returns `403`.
+> 3. **Initial Diagnosis Presence** — `referral_diagnosis` is mandatory. A MedicalFile is atomically created alongside the inmate.
+>
+> **Transfer Safety Engine (PATCH `cell_block`):** When **Security Staff** patches `cell_block`, the engine requires:
 > 1. A **Medical Staff** member must have reviewed or updated the inmate's medical file within the last **7 days**.
 > 2. A **Super Admin** must have viewed the inmate's medical file within the last **24 hours**.
+>
+> ⚠️ **Important:** The Safety Engine only recognises audit entries from the **`/medical-records/{id}`** endpoint — not the nested medical data shown inside `/inmates/{id}` detail views. Even though Super Admins and Medical Staff see the full medical record when retrieving an inmate, that read is logged as an `InmateProfile` access, not a `MedicalFile` access. To satisfy the Safety Engine, staff must explicitly read the medical file via `/medical-records/{id}`.
 
 <br>
 
@@ -62,11 +70,11 @@ Base URL: `http://127.0.0.1:8001`
 |---|--------|----------|-------------|----------------|-------------|
 | 13 | `GET` | `/api/v1/default-router/medical-records` | Super Admin, Medical Staff | — | List medical records. Super Admins see all; Medical Staff see only files assigned to them. Throttled (20/min). |
 | 14 | `GET` | `/api/v1/default-router/medical-records/{id}` | Super Admin, Medical Staff | — | Retrieve a single medical record. Only accessible if assigned to the requesting doctor. Triggers audit log. |
-| 15 | `POST` | `/api/v1/default-router/medical-records` | Super Admin, Medical Staff | `{"inmate": 4, "diagnosis": "DID", "meds": "Risperidone", "assigned_to": 2}` | Create a medical file for an existing inmate. `assigned_to` links the file to a specific doctor (User ID). |
-| 16 | `PATCH` | `/api/v1/default-router/medical-records/{id}` | Super Admin, Medical Staff | `{"meds": "Updated prescription"}` | Update diagnosis or medication. |
+| 15 | `POST` | `/api/v1/default-router/medical-records` | Super Admin, Medical Staff | `{"inmate": 4, "referral_diagnosis": "DID", "meds": "Risperidone", "assigned_to": 2}` | Create a medical file for an existing inmate. `assigned_to` links the file to a specific doctor (User ID). |
+| 16 | `PATCH` | `/api/v1/default-router/medical-records/{id}` | Super Admin, Medical Staff | `{"internal_diagnosis": "Updated clinical assessment"}` | Update diagnosis or medication. `referral_diagnosis` = external referral; `internal_diagnosis` = in-house clinical assessment (defaults to `"Pending evaluation"`). |
 | 17 | `DELETE` | `/api/v1/default-router/medical-records/{id}` | Super Admin | — | Delete a medical record. |
 
-> **Note:** `PUT` is blocked via `http_method_names`. Medical records use **Clinical Ownership** — each file is linked to a specific doctor via `assigned_to`, and Medical Staff can only access their own assigned files. Super Admins bypass this restriction.
+> **Note:** `PUT` is blocked via `http_method_names`. Medical records use **Clinical Ownership** — each file is linked to a specific doctor via `assigned_to`, and Medical Staff can only access their own assigned files. Super Admins bypass this restriction. Medical files are auto-created during inmate admission (see #10) with `referral_diagnosis` pre-populated.
 
 <br>
 
@@ -84,11 +92,21 @@ Base URL: `http://127.0.0.1:8001`
 
 <br>
 
-### 7. Audit Logs
+### 7. Cell Block Dashboard
 
 | # | Method | Endpoint | Who Can Call | Sample Payload | Description |
 |---|--------|----------|-------------|----------------|-------------|
-| 23 | `GET` | `/api/v1/default-router/security-logs` | Super Admin | — | List all audit entries (sorted newest first). Throttled (50/min). |
-| 24 | `GET` | `/api/v1/default-router/security-logs/{id}` | Super Admin | — | Retrieve a specific audit log entry. |
+| 23 | `GET` | `/api/v1/default-router/cell-blocks` | Super Admin | — | List all cell blocks with `name`, `max_capacity`, and live `current_count`. Read-only. |
+
+> **Note:** Cell blocks are managed entities with a default capacity of 10. The `current_count` is a computed property reflecting live inmate occupancy. Only Super Admins can view this dashboard.
+
+<br>
+
+### 8. Audit Logs
+
+| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
+|---|--------|----------|-------------|----------------|-------------|
+| 24 | `GET` | `/api/v1/default-router/security-logs` | Super Admin | — | List all audit entries (sorted newest first). Throttled (50/min). |
+| 25 | `GET` | `/api/v1/default-router/security-logs/{id}` | Super Admin | — | Retrieve a specific audit log entry. |
 
 > **Note:** Audit logs are auto-generated and **immutable**. All write methods (`POST`, `PUT`, `PATCH`, `DELETE`) are blocked via `http_method_names`. CUD operations are logged via Django Signals; Read operations via the `@audit_read` decorator.

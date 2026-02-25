@@ -3,8 +3,8 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from .models import AuditLog, InmateProfile, MedicalFile
-from .serializers import AuditLogSerializer, InmateProfileSerializer, MedicalFileSerializer, UserSerializer, InmateDetailSerializer
+from .models import AuditLog, CellBlock, InmateProfile, MedicalFile
+from .serializers import AuditLogSerializer, CellBlockSerializer, InmateProfileSerializer, MedicalFileSerializer, UserSerializer, InmateDetailSerializer
 from .permissions import StrictDjangoModelPermissions, IsSuperAdmin
 from rest_framework.response import Response
 from .decorators import audit_read
@@ -50,22 +50,31 @@ class InmateViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
+    def create(self, request, *args, **kwargs):
+        block_name = request.data.get('cell_block')
+        if block_name:
+            try:
+                block = CellBlock.objects.get(name=block_name)
+            except CellBlock.DoesNotExist:
+                return Response({"error": f"Cell block '{block_name}' does not exist."}, status=400)
+            if block.current_count >= block.max_capacity:
+                return Response({
+                    "error": f"{block.name} is at full capacity ({block.max_capacity}). Transfer or discharge an existing inmate first."
+                }, status=403)
+        return super().create(request, *args, **kwargs)
+
     def partial_update(self, request, *args, **kwargs):
         user = request.user
         is_security = user.groups.filter(name='Security Staff').exists()
 
-        # Only Super Admins and Security Staff can PATCH inmates
         if not user.is_superuser and not is_security:
             return Response({"detail": "You do not have permission to perform this action."}, status=403)
 
-        # Security Staff can only update cell_block
         if is_security and set(request.data.keys()) - {'cell_block'}:
             return Response({"error": "Security Staff can only update cell_block."}, status=403)
 
         inmate = self.get_object()
 
-        # --- TRANSFER SAFETY ENGINE ---
-        # Only fires for Security Staff changing cell_block
         if 'cell_block' in request.data and is_security:
             medical_file = getattr(inmate, 'medicalfile', None)
             if not medical_file:
@@ -73,7 +82,6 @@ class InmateViewSet(viewsets.ModelViewSet):
 
             now = timezone.now()
 
-            # Check for recent Medical Staff review (< 7 days)
             medical_check = AuditLog.objects.filter(
                 target_model='MedicalFile',
                 target_id=medical_file.id,
@@ -87,7 +95,6 @@ class InmateViewSet(viewsets.ModelViewSet):
                     "error": "Transfer blocked. No Medical Staff has reviewed or updated this inmate's file in the last 7 days."
                 }, status=403)
 
-            # Check for recent Super Admin awareness (< 1 day)
             admin_check = AuditLog.objects.filter(
                 target_model='MedicalFile',
                 target_id=medical_file.id,
@@ -100,7 +107,6 @@ class InmateViewSet(viewsets.ModelViewSet):
                 return Response({
                     "error": "Transfer blocked. No Super Admin has reviewed this inmate's file in the last 24 hours."
                 }, status=403)
-        # --- END SAFETY ENGINE ---
 
         return super().partial_update(request, *args, **kwargs)
 
@@ -128,3 +134,10 @@ class UserGroupViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsSuperAdmin]
     http_method_names = ['get', 'patch']
+
+
+class CellBlockViewSet(viewsets.ModelViewSet):
+    queryset = CellBlock.objects.all()
+    serializer_class = CellBlockSerializer
+    permission_classes = [IsSuperAdmin]
+    http_method_names = ['get']

@@ -1,6 +1,18 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class CellBlock(models.Model):
+    name = models.CharField(max_length=20, unique=True)
+    max_capacity = models.PositiveIntegerField(default=10)
+
+    @property
+    def current_count(self):
+        return self.inmates.filter(status='ACTIVE').count()
+
+    def __str__(self):
+        return self.name
+
+
 class InmateProfile(models.Model):
     STATUS_CHOICES = [
         ('ACTIVE', 'Active'),
@@ -10,17 +22,9 @@ class InmateProfile(models.Model):
         ('DECEASED', 'Deceased'),
     ]
 
-    CELL_BLOCK_CHOICES = [
-        ('Block-A', 'Block A'),
-        ('Block-B', 'Block B'),
-        ('Block-C', 'Block C'),
-        ('Block-D', 'Block D'),
-        ('Block-E', 'Block E'),
-    ]
-
-    name = models.CharField(max_length=100)
-    alias = models.CharField(max_length=50)
-    cell_block = models.CharField(max_length=20, choices=CELL_BLOCK_CHOICES)
+    name = models.CharField(max_length=100, unique=True)
+    alias = models.CharField(max_length=50, unique=True)
+    cell_block = models.ForeignKey(CellBlock, on_delete=models.PROTECT, related_name='inmates')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
     
     def __str__(self):
@@ -29,7 +33,8 @@ class InmateProfile(models.Model):
     
 class MedicalFile(models.Model):
     inmate = models.OneToOneField(InmateProfile, on_delete=models.CASCADE)
-    diagnosis = models.CharField(max_length=100)
+    referral_diagnosis = models.CharField(max_length=200)
+    internal_diagnosis = models.CharField(max_length=200, blank=True, default='Pending evaluation')
     meds = models.CharField(max_length=150)
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_files')
     

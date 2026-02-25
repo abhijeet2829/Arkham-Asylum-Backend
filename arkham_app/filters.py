@@ -3,7 +3,7 @@ from .models import InmateProfile
 
 class InmateProfileFilter(filters.FilterSet):
     name = filters.CharFilter(lookup_expr='icontains')
-    cell_block = filters.CharFilter(lookup_expr='iexact')
+    cell_block = filters.CharFilter(field_name='cell_block__name', lookup_expr='iexact')
 
     class Meta:
         model = InmateProfile

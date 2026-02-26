@@ -102,41 +102,34 @@
 graph LR
     subgraph CLIENTS["🖥️ Client Tools"]
         direction TB
-        BROWSER["Browser<br/><code>127.0.0.1:8000</code>"]
+        BROWSER["Browser<br/><code>127.0.0.1:8001</code>"]
         POSTMAN["Postman / Insomnia<br/><code>Authorization: Bearer ...</code>"]
-        WORKBENCH["MySQL Workbench<br/><code>localhost:3306</code>"]
     end
 
-    subgraph DJANGO["⚙️ Django Runtime — Port 8000"]
+    subgraph DJANGO["⚙️ Django Runtime"]
         direction TB
 
         subgraph MW["Middleware Pipeline"]
             direction TB
-            SEC_MW["SecurityMiddleware"]
-            SESSION["SessionMiddleware"]
-            CORS["CorsMiddleware"]
-            COMMON["CommonMiddleware"]
-            CSRF["CsrfViewMiddleware"]
-            AUTH_MW["AuthenticationMiddleware"]
-            MSG["MessageMiddleware"]
-            XFRAME["XFrameOptionsMiddleware"]
+            STD["Django Built-In Stack<br/><code>Security · Session · Common · Auth</code>"]
+            CORS["CorsMiddleware<br/><code>CORS_ALLOWED_ORIGINS</code>"]
             TL["ThreadLocalMiddleware<br/><code>middleware.py</code>"]
-            SEC_MW --> SESSION --> CORS --> COMMON --> CSRF --> AUTH_MW --> MSG --> XFRAME --> TL
+            STD --> CORS --> TL
         end
 
         subgraph DRF["DRF Security Layer"]
             direction TB
             JWT["JWT Authentication<br/><code>SimpleJWT + Djoser</code>"]
-            PERMS["Permissions Check<br/><code>StrictDjangoModelPermissions</code><br/><code>IsSecurityStaff</code>"]
-            THROTTLE["Throttling<br/><code>AnonRateThrottle — 5/min</code><br/><code>UserRateThrottle — 100/min</code><br/><code>ScopedRateThrottle</code>"]
+            PERMS["Permissions Check<br/><code>StrictDjangoModelPermissions</code>"]
+            THROTTLE["Throttling<br/><code>Anon · User · Scoped</code>"]
             JWT --> PERMS --> THROTTLE
         end
 
         subgraph APP["Application Layer"]
             direction TB
             URLS["URL Router<br/><code>urls.py → DefaultRouter</code>"]
-            VIEWS["ViewSets<br/><code>SecurityViewSet</code><br/><code>InmateViewSet</code><br/><code>MedicalViewSet</code>"]
-            SERIAL["Serializers<br/><code>ModelSerializer</code><br/><code>Validation &amp; JSON</code>"]
+            VIEWS["ViewSets<br/><code>Inmate · Medical · Security<br/>CellBlock · UserGroup</code>"]
+            SERIAL["Serializers<br/><code>SlugRelatedField · transaction.atomic</code>"]
             URLS --> VIEWS --> SERIAL
         end
 
@@ -149,9 +142,8 @@ graph LR
 
     BROWSER --> DJANGO
     POSTMAN --> DJANGO
-    WORKBENCH --> DB
     APP -->|"ORM Queries"| DB
-
+    
     style CLIENTS fill:#1a2535,stroke:#3a6a8b,color:#e0e0e0
     style DJANGO fill:#1a1a3a,stroke:#4a4a7a,color:#e0e0e0
     style MW fill:#2a1525,stroke:#6b3a52,color:#e0e0e0
@@ -161,14 +153,10 @@ graph LR
 
     style BROWSER fill:#16162a,stroke:#3a6a8b,color:#b0b8c8
     style POSTMAN fill:#16162a,stroke:#3a6a8b,color:#b0b8c8
-    style WORKBENCH fill:#16162a,stroke:#3a6a8b,color:#b0b8c8
     style MYSQL fill:#1a3a55,stroke:#56b4e9,color:#e0e0e0
 
-    style SEC_MW fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
-    style SESSION fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
+    style STD fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
     style CORS fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
-    style CSRF fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
-    style AUTH_MW fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
     style TL fill:#3a1a2a,stroke:#6b3a52,color:#d0b0c0
 
     style JWT fill:#3a3515,stroke:#8b7a3a,color:#e0d0a0
@@ -188,32 +176,41 @@ graph LR
 graph TB
     subgraph MODELS["📊 Database Models — MySQL"]
         direction LR
-        IP["<b>InmateProfile</b><br/>id · name · alias · cell_block"]
-        MF["<b>MedicalFile</b><br/>id · inmate_id (FK) · diagnosis · meds"]
-        AL["<b>AuditLog</b><br/>id · actor_name · action_type<br/>target_model · target_id · timestamp"]
+        USER["<b>User (Built-In)</b><br/>id · username · email · groups"]
+        CB["<b>CellBlock</b><br/>id · name · max_capacity"]
+        IP["<b>InmateProfile</b><br/>id · name · cell_block_id (FK)"]
+        MF["<b>MedicalFile</b><br/>id · inmate_id (FK) · assigned_to (FK)"]
+        AL["<b>AuditLog</b><br/>id · actor_name · target_model"]
+        CB -- "OneToMany" --> IP
         IP -- "OneToOne" --> MF
+        USER -- "ManyToOne" --> MF
     end
 
-    subgraph VIEWSETS["🔌 ViewSets &amp; Actions"]
+    subgraph VIEWSETS["🔌 ViewSets & Actions"]
         direction LR
-        SV["SecurityViewSet<br/><code>AuditLogAccessThrottle</code><br/><i>50 req/min</i>"]
-        IV["InmateViewSet<br/><code>transfer action</code><br/><code>InmateTransferThrottle</code><br/><i>10 req/min</i>"]
-        MV["MedicalViewSet<br/><code>MedicalAccessThrottle</code><br/><i>20 req/min</i>"]
+        SV["SecurityViewSet<br/><code>AuditLogAccessThrottle (50/m)</code>"]
+        IV["InmateViewSet<br/><code>POST: Capacity Check</code><br/><code>PATCH msg: Transfer Safety</code>"]
+        MV["MedicalViewSet<br/><code>MedicalAccessThrottle (20/m)</code>"]
+        CV["CellBlockViewSet<br/><code>IsSuperAdmin</code>"]
+        UV["UserGroupViewSet<br/><code>IsSuperAdmin</code>"]
     end
 
     subgraph AUDIT["⚡ Audit Pipeline"]
         direction TB
-        SIG["Django Signals<br/><code>signals.py</code><br/><i>post_save · post_delete</i>"]
-        DEC["@audit_read Decorator<br/><code>decorators.py</code><br/><i>Wraps .retrieve()</i>"]
-        TLM["ThreadLocalMiddleware<br/><code>get_current_user()</code><br/><i>Resolves JWT → User</i>"]
+        SIG["Django Signals<br/><code>post_save · post_delete</code>"]
+        DEC["@audit_read Decorator<br/><code>Wraps .retrieve()</code>"]
+        TLM["ThreadLocalMiddleware<br/><code>get_current_user()</code>"]
     end
 
     SV --> AL
     IV --> IP
     MV --> MF
+    CV --> CB
+    UV --> USER
 
     IP -->|"CREATE / UPDATE / DELETE"| SIG
     MF -->|"CREATE / UPDATE / DELETE"| SIG
+    USER -->|"UPDATE"| SIG
 
     IV -->|"retrieve()"| DEC
     MV -->|"retrieve()"| DEC
@@ -228,13 +225,17 @@ graph TB
     style VIEWSETS fill:#152a20,stroke:#3a8b5a,color:#e0e0e0
     style AUDIT fill:#2a2515,stroke:#8b7a3a,color:#e0e0e0
 
+    style USER fill:#1a4a6a,stroke:#56b4e9,color:#e0e0e0
     style IP fill:#1a4a6a,stroke:#56b4e9,color:#e0e0e0
     style MF fill:#1a4a6a,stroke:#56b4e9,color:#e0e0e0
     style AL fill:#4a2a1a,stroke:#e07a5f,color:#e0e0e0
+    style CB fill:#1a4a6a,stroke:#56b4e9,color:#e0e0e0
 
     style SV fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
     style IV fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
     style MV fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
+    style CV fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
+    style UV fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
 
     style SIG fill:#3a3515,stroke:#f5c542,color:#e0d0a0
     style DEC fill:#3a3515,stroke:#f5c542,color:#e0d0a0
@@ -247,24 +248,26 @@ graph TB
             <h2>URL Routing Map</h2>
             <div class="mermaid">
 graph LR
-    ROOT["127.0.0.1:8000"] --> ADMIN["/admin/<br/><i>Django Admin Panel</i>"]
+    ROOT["127.0.0.1:8001"] --> ADMIN["/admin/<br/><i>Django Admin Panel</i>"]
     ROOT --> AUTH_URL["/api/auth/<br/><i>Djoser + JWT</i>"]
     ROOT --> API["/api/v1/<br/><i>arkham_app.urls</i>"]
 
-    AUTH_URL --> JWT_CREATE["/jwt/create<br/><i>Obtain tokens</i>"]
-    AUTH_URL --> JWT_REFRESH["/jwt/refresh<br/><i>Refresh access token</i>"]
-    AUTH_URL --> USERS["/users/<br/><i>Register user</i>"]
-    AUTH_URL --> USERS_ME["/users/me/<br/><i>Current user info</i>"]
+    AUTH_URL --> USERS["/users/<br/><i>Register</i>"]
+    AUTH_URL --> USERS_ME["/users/me/<br/><i>Profile update</i>"]
+    AUTH_URL --> USERS_SET_PASS["/users/set_password/<br/><i>Change Password</i>"]
+    AUTH_URL --> JWT_CREATE["/jwt/create<br/><i>Login</i>"]
+    AUTH_URL --> JWT_REFRESH["/jwt/refresh<br/><i>Refresh token</i>"]
+    AUTH_URL --> JWT_VERIFY["/jwt/verify<br/><i>Verify token</i>"]
 
-    API --> WELCOME["/root/<br/><i>Welcome endpoint</i>"]
+    API --> WELCOME["/root/<br/><i>Welcome / Health</i>"]
     API --> ROUTER["/default-router/"]
 
     ROUTER --> INMATES["/inmates<br/><i>InmateViewSet</i>"]
     ROUTER --> MEDICAL["/medical-records<br/><i>MedicalViewSet</i>"]
     ROUTER --> SECURITY["/security-logs<br/><i>SecurityViewSet</i>"]
-
-    INMATES --> TRANSFER["/{id}/transfer<br/><i>Cell block transfer</i>"]
-
+    ROUTER --> GROUPS["/user-groups<br/><i>UserGroupViewSet</i>"]
+    ROUTER --> BLOCKS["/cell-blocks<br/><i>CellBlockViewSet</i>"]
+    
     style ROOT fill:#2a1a3a,stroke:#6b3a8b,color:#e0e0e0
     style ADMIN fill:#3a3515,stroke:#8b7a3a,color:#e0d0a0
     style AUTH_URL fill:#3a1525,stroke:#8b3a62,color:#e0b0c0
@@ -272,15 +275,18 @@ graph LR
 
     style JWT_CREATE fill:#2a1525,stroke:#6b3a52,color:#d0b0c0
     style JWT_REFRESH fill:#2a1525,stroke:#6b3a52,color:#d0b0c0
+    style JWT_VERIFY fill:#2a1525,stroke:#6b3a52,color:#d0b0c0
     style USERS fill:#2a1525,stroke:#6b3a52,color:#d0b0c0
     style USERS_ME fill:#2a1525,stroke:#6b3a52,color:#d0b0c0
+    style USERS_SET_PASS fill:#2a1525,stroke:#6b3a52,color:#d0b0c0
 
     style WELCOME fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
     style ROUTER fill:#1a4a2a,stroke:#3a8b5a,color:#c0e0c0
     style INMATES fill:#1a4a6a,stroke:#56b4e9,color:#e0e0e0
     style MEDICAL fill:#1a4a6a,stroke:#56b4e9,color:#e0e0e0
     style SECURITY fill:#4a2a1a,stroke:#e07a5f,color:#e0e0e0
-    style TRANSFER fill:#3a3515,stroke:#f5c542,color:#e0d0a0
+    style GROUPS fill:#1a4a6a,stroke:#56b4e9,color:#e0e0e0
+    style BLOCKS fill:#1a4a6a,stroke:#56b4e9,color:#e0e0e0
             </div>
         </div>
 
@@ -297,8 +303,12 @@ graph LR
             <p style="font-size:0.9rem; color:#b0b8c8; line-height:1.6;">Our security is multi-layered. <b>SimpleJWT</b> provides stateless authentication via Bearer tokens. <b>StrictDjangoModelPermissions</b> ensures that even standard Django permissions are applied to <code>GET</code> requests (which Django skips by default). Finally, <b>Scoped Throttling</b> provides granular protection for sensitive actions like inmate transfers and medical record access.</p>
         </div>
         <div class="detail-card" style="background:rgba(22, 22, 42, 0.6); border:1px solid #2a2a45; border-radius:12px; padding:24px;">
-            <h4 style="color:#56b4e9; margin-bottom:12px; border-bottom:1px solid #2a2a45; padding-bottom:8px;">⚡ The Audit Pipeline</h4>
-            <p style="font-size:0.9rem; color:#b0b8c8; line-height:1.6;">We use a hybrid approach to auditing. <b>Django Signals</b> (<code>post_save</code>, <code>post_delete</code>) automatically track any database mutations. For read operations, which don't trigger signals, we use a custom <b>@audit_read</b> decorator on ViewSet methods. Both systems rely on <code>ThreadLocalMiddleware</code> to identify the actor behind the action.</p>
+            <h4 style="color:#56b4e9; margin-bottom:12px; border-bottom:1px solid #2a2a45; padding-bottom:8px;">⚡ The Audit Pipeline &amp; Safety Engine</h4>
+            <p style="font-size:0.9rem; color:#b0b8c8; line-height:1.6;">We use a hybrid approach to auditing. <b>Django Signals</b> (<code>post_save</code>, <code>post_delete</code>) automatically track any database mutations. For read operations, we use a custom <b>@audit_read</b> decorator. The <b>Transfer Safety Engine</b> inside <code>InmateViewSet</code> actively parses these generated logs to permit or deny cell block transfers based on historical physician activity.</p>
+        </div>
+        <div class="detail-card" style="background:rgba(22, 22, 42, 0.6); border:1px solid #2a2a45; border-radius:12px; padding:24px;">
+            <h4 style="color:#56b4e9; margin-bottom:12px; border-bottom:1px solid #2a2a45; padding-bottom:8px;">🛡️ The Admission Engine</h4>
+            <p style="font-size:0.9rem; color:#b0b8c8; line-height:1.6;">A two-step ingestion process. First, the <b>View</b> checks facility-wide rules (Cell Block Capacity evaluation). Secondly, the <b>Serializer</b> handles low-level data integrity constraints using <b>transaction.atomic()</b> to write both the `InmateProfile` and `MedicalFile` simultaneously, guaranteeing no ghost profiles are created.</p>
         </div>
     </div>
 
@@ -312,19 +322,19 @@ graph LR
                 <th>Purpose</th>
             </tr>
         </thead>
-        <tbody>
-            <tr><td><code>settings.py</code></td><td>Config</td><td>DRF settings, JWT lifetimes, throttle rates, middleware stack, database connection, CORS origins</td></tr>
-            <tr><td><code>urls.py</code> (project)</td><td>Routing</td><td>Root URL conf — admin, Djoser auth, app include under <code>/api/v1/</code></td></tr>
-            <tr><td><code>urls.py</code> (app)</td><td>Routing</td><td>DRF DefaultRouter registering 3 ViewSets + welcome endpoint</td></tr>
-            <tr><td><code>views.py</code></td><td>Application</td><td>SecurityViewSet, InmateViewSet (with transfer action), MedicalViewSet</td></tr>
-            <tr><td><code>serializers.py</code></td><td>Application</td><td>ModelSerializers for AuditLog, InmateProfile, MedicalFile — all fields exposed</td></tr>
-            <tr><td><code>models.py</code></td><td>Data</td><td>InmateProfile, MedicalFile (OneToOne → Inmate), AuditLog (ordered by -timestamp)</td></tr>
-            <tr><td><code>permissions.py</code></td><td>Security</td><td>StrictDjangoModelPermissions (adds GET check), IsSecurityStaff (group-based)</td></tr>
-            <tr><td><code>throttles.py</code></td><td>Security</td><td>InmateTransferThrottle (10/min), MedicalAccessThrottle (20/min), AuditLogAccessThrottle (50/min)</td></tr>
-            <tr><td><code>middleware.py</code></td><td>Security</td><td>ThreadLocalMiddleware — resolves JWT to user, exposes <code>get_current_user()</code> globally</td></tr>
-            <tr><td><code>signals.py</code></td><td>Audit</td><td>post_save / post_delete signals on InmateProfile &amp; MedicalFile → AuditLog entries</td></tr>
-            <tr><td><code>decorators.py</code></td><td>Audit</td><td><code>@audit_read</code> decorator — logs READ actions when <code>.retrieve()</code> returns 200</td></tr>
-            <tr><td><code>apps.py</code></td><td>Config</td><td>App config — imports signals on <code>ready()</code></td></tr>
+                <tbody>
+            <tr><td><code>settings.py</code></td><td>Config</td><td>DRF settings, JWT lifetimes, throttle rates, database connection, CORS origins</td></tr>
+            <tr><td><code>urls.py</code> (project)</td><td>Routing</td><td>Root URL conf — admin, Djoser auth endpoints, app include under <code>/api/v1/</code></td></tr>
+            <tr><td><code>urls.py</code> (app)</td><td>Routing</td><td>DRF DefaultRouter registering 5 ViewSets + welcome endpoint</td></tr>
+            <tr><td><code>views.py</code></td><td>Application</td><td>Contains ViewSets: Security, Inmate, Medical, CellBlock, UserGroup. Handles transfer/capacity constraints.</td></tr>
+            <tr><td><code>serializers.py</code></td><td>Application</td><td>ModelSerializers. Uses <code>transaction.atomic()</code> for Admission logic.</td></tr>
+            <tr><td><code>models.py</code></td><td>Data</td><td>InmateProfile, MedicalFile, CellBlock, AuditLog.</td></tr>
+            <tr><td><code>permissions.py</code></td><td>Security</td><td>StrictDjangoModelPermissions (adds GET check), IsSuperAdmin.</td></tr>
+            <tr><td><code>throttles.py</code></td><td>Security</td><td>MedicalAccessThrottle (20/min), AuditLogAccessThrottle (50/min).</td></tr>
+            <tr><td><code>middleware.py</code></td><td>Security</td><td>ThreadLocalMiddleware — resolves JWT to user, exposes <code>get_current_user()</code> globally for audit logs.</td></tr>
+            <tr><td><code>signals.py</code></td><td>Audit</td><td>post_save / post_delete signals on models → AuditLog entries.</td></tr>
+            <tr><td><code>decorators.py</code></td><td>Audit</td><td><code>@audit_read</code> decorator — logs READ actions when <code>.retrieve()</code> returns 200.</td></tr>
+            <tr><td><code>apps.py</code></td><td>Config</td><td>App config — imports signals on <code>ready()</code>.</td></tr>
         </tbody>
     </table>
 

@@ -1,112 +1,177 @@
-## 🔌 API Endpoints
+# 🦇 Arkham Asylum Backend - Digital Forensic Psychiatric Hospital
 
-Base URL: `http://127.0.0.1:8001`
+A robust, Zero-Trust backend system designed for the secure management of Gotham's most dangerous criminals. This Django REST Framework (DRF) project enforces strict Role-Based Access Control (RBAC), immutable audit logging, and atomic database transactions to ensure data integrity across highly classified medical and security records.
+
+<br>
+
+## 🏛️ Architecture Documentation
+
+The repository contains three interactive `mermaid.js` diagrams detailing the exact flow and constraints of the system. Open these HTML files directly in any web browser to view the system visualization:
+
+*   **`solution_architecture.html`**: High-level module interaction for Business Stakeholders.
+*   **`technical_architecture.html`**: Low-level Django/DRF request lifecycles, middlewares, and throttles.
+*   **`database_er_model.html`**: Exact Database Schema, relationships, and constraints.
+
+<br>
+
+## 💻 Technology Stack & AI
+
+**Core Infrastructure...**
+*   **Backend Framework:** Python, Django REST Framework (DRF)
+*   **Database:** MySQL Workbench 8.0
+*   **Authentication:** Djoser, SimpleJWT (JSON Web Tokens)
+*   **Architecture Mapping:** Mermaid.js
+
+<br>
+
+**LLM Collaborators...**
+*   **Antigravity (Google AI Pro):** Orchestrated core Backend logics, database structuring, and rigorous backend engine design.
+*   **Perplexity Pro:** Utilized for high-level research and requirements extension in a logical, architectural way.
+*   **OpenClaw (`openai-gpt5-chat-latest`):** Provided OS-level project control, contextual awareness, and overarching advisory guidance.
+
+<br>
+
+## ✨ Key Features
+
+1.  **🚨 The Admission Engine:** A robust ingestion guardrail. Employs `transaction.atomic()` to guarantee that an `InmateProfile` and their highly classified `MedicalFile` are created simultaneously with zero ghost records. It natively evaluates live `CellBlock` capacity, outright rejecting an admission if the facility is full.
+
+2.  **🛡️ Transfer Safety Engine:** A proactive security protocol reading directly from the immutable audit stream. Guards cannot transfer an inmate to a new Cell Block unless a certified Doctor has reviewed their Medical File within 7 days, and a Super Admin within 24 hours.
+
+3.  **📜 Immutable Audit Logging & Zero-Trust:** Every CUD (Create, Update, Delete) operation is captured automatically via `signals.py`. Every READ operation is logged via a custom `@audit_read` decorator. Layered beneath StrictDjangoModelPermissions, Group-based clearances (RBAC) and scoped Throttling.
+
+<br>
+
+## 🚀 Quick Start & Local Setup
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/arkham-asylum-backend.git
+cd arkham-asylum-backend
+```
+
+### 2. Set Up Virtual Environment
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Database Setup (MySQL 8.0)
+Log into your local MySQL workbench and create the database:
+```sql
+CREATE DATABASE arkham_registry;
+```
+*Note: Update `arkham_pm/settings.py` with your MySQL credentials.*
+
+### 5. Run Migrations & Start Server
+```bash
+python manage.py makemigrations
+python manage.py migrate
+python manage.py runserver 8000
+```
+
+<br>
+
+## 🔌 API Endpoints Reference
+
+Base URL: `http://127.0.0.1:8000`
 
 <br>
 
 ### 0. Health Check
 
-| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
-|---|--------|----------|-------------|----------------|-------------|
-| 0 | `GET` | `/api/v1/root/` | Anyone (public) | — | Returns a welcome message confirming the server is alive. |
+| # | Method | Endpoint | Authorization | Sample Payload | Description |
+|---|--------|----------|---------------|----------------|-------------|
+| 1 | `GET` | `/api/v1/root/` | Public | — | Returns a welcome message confirming the server is alive. |
 
 <br>
 
 ### 1. Registration
 
-| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
-|---|--------|----------|-------------|----------------|-------------|
-| 1 | `POST` | `/api/auth/users/` | Anyone (public) | `{"username": "JohnDoe", "email": "john@gotham.com", "password": "SecureP@ss1"}` | Register a new user account. User starts with zero group clearance (orphan). |
+| # | Method | Endpoint | Authorization | Sample Payload | Description |
+|---|--------|----------|---------------|----------------|-------------|
+| 2 | `POST` | `/api/auth/users/` | Public | <pre>{<br>  "username": "...",<br>  "password": "..."<br>}</pre> | Register a new user account. |
 
 <br>
 
 ### 2. Authentication
 
-| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
-|---|--------|----------|-------------|----------------|-------------|
-| 2 | `POST` | `/api/auth/jwt/create/` | Any registered user | `{"username": "JohnDoe", "password": "SecureP@ss1"}` | Login — returns `access` (45 min) and `refresh` (4 days) tokens. |
-| 3 | `POST` | `/api/auth/jwt/refresh/` | Any registered user | `{"refresh": "<refresh_token>"}` | Get a new access token using a valid refresh token. |
-| 4 | `POST` | `/api/auth/jwt/verify/` | Any registered user | `{"token": "<access_token>"}` | Verify if a given token is still valid. Returns 200 or 401. |
+| # | Method | Endpoint | Authorization | Sample Payload | Description |
+|---|--------|----------|---------------|----------------|-------------|
+| 3 | `POST` | `/api/auth/jwt/create/` | Registered User | <pre>{<br>  "username": "...",<br>  "password": "..."<br>}</pre> | Login — returns `access` (45 min) and `refresh` (4 days) tokens. |
+| 4 | `POST` | `/api/auth/jwt/refresh/` | Registered User | <pre>{<br>  "refresh": "..."<br>}</pre> | Get a new access token. |
+| 5 | `POST` | `/api/auth/jwt/verify/` | Registered User | <pre>{<br>  "token": "..."<br>}</pre> | Verify if a token is valid. |
+| 6 | `GET` | `/api/auth/users/me/` | Authenticated | — | Test the access token by viewing your own profile. |
 
 <br>
 
-### 3. Profile & Password
+### 3. Profile & Password Management
 
-| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
-|---|--------|----------|-------------|----------------|-------------|
-| 5 | `GET` | `/api/auth/users/me/` | Any authenticated user | — | View own profile (username, email, id). |
-| 6 | `PATCH` | `/api/auth/users/me/` | Any authenticated user | `{"email": "new@gotham.com"}` | Update own profile details (username, email). |
-| 7 | `POST` | `/api/auth/users/set_password/` | Any authenticated user | `{"current_password": "OldP@ss", "new_password": "NewP@ss1"}` | Change own password. Requires current password for identity verification. |
+| # | Method | Endpoint | Authorization | Sample Payload | Description |
+|---|--------|----------|---------------|----------------|-------------|
+| 7 | `GET` | `/api/auth/users/me/` | Authenticated | — | View own profile. |
+| 8 | `PATCH` | `/api/auth/users/me/` | Authenticated | <pre>{<br>  "email": "..."<br>}</pre> | Update own profile details. |
+| 9 | `POST` | `/api/auth/users/set_password/` | Authenticated | <pre>{<br>  "current_password": "...",<br>  "new_password": "..."<br>}</pre> | Change own password. |
 
 <br>
 
 ### 4. Inmate Management
 
-| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
-|---|--------|----------|-------------|----------------|-------------|
-| 8 | `GET` | `/api/v1/default-router/inmates` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | List all inmates with name, alias, cell block (as name string), and status. Supports `?cell_block=Block-A` filter. |
-| 9 | `GET` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff, Medical Staff, Public Visitor | — | Retrieve single inmate. Authorized clinical/admin staff see nested Medical Record (with `referral_diagnosis` and `internal_diagnosis`); Security/Visitors see flat profile. |
-| 10 | `POST` | `/api/v1/default-router/inmates` | Super Admin | `{"name": "Bane", "alias": "The Venom User", "cell_block": "Block-D", "referral_diagnosis": "Venom dependency"}` | Admit a new inmate. `referral_diagnosis` is **required** (Initial Diagnosis Presence rule). Automatically creates a linked MedicalFile. Status defaults to `ACTIVE`. |
-| 11 | `PATCH` | `/api/v1/default-router/inmates/{id}` | Super Admin, Security Staff | `{"cell_block": "Block-C"}` | Update inmate details. Security Staff can **only** update `cell_block` (with **Transfer Safety Clearance**, see note). Super Admins can update any field. |
+> **Note:** `PUT` and `DELETE` are blocked. Use `PATCH {"status": "DISCHARGED"}` for soft deletes.
 
-> **Note:** `PUT` and `DELETE` are blocked via `http_method_names`. Inmates are never hard-deleted — use `PATCH {"status": "DISCHARGED"}` for soft-delete (FPH standard).
->
-> **Admission Engine (POST):** Three checks run before any inmate is admitted:
-> 1. **Duplicate Identity Check** — `name` and `alias` must be unique (model-level constraint).
-> 2. **Cell Block Capacity** — The target block's `current_count` must be below `max_capacity`. If full, returns `403`.
-> 3. **Initial Diagnosis Presence** — `referral_diagnosis` is mandatory. A MedicalFile is atomically created alongside the inmate.
->
-> **Transfer Safety Engine (PATCH `cell_block`):** When **Security Staff** patches `cell_block`, the engine requires:
-> 1. A **Medical Staff** member must have reviewed or updated the inmate's medical file within the last **7 days**.
-> 2. A **Super Admin** must have viewed the inmate's medical file within the last **24 hours**.
->
-> ⚠️ **Important:** The Safety Engine only recognises audit entries from the **`/medical-records/{id}`** endpoint — not the nested medical data shown inside `/inmates/{id}` detail views. Even though Super Admins and Medical Staff see the full medical record when retrieving an inmate, that read is logged as an `InmateProfile` access, not a `MedicalFile` access. To satisfy the Safety Engine, staff must explicitly read the medical file via `/medical-records/{id}`.
+| # | Method | Endpoint | Authorization | Sample Payload | Description |
+|---|--------|----------|---------------|----------------|-------------|
+| 10 | `GET` | `/api/v1/default-router/inmates` | Any Staff | — | List all inmates. Supports `?cell_block=` filter. |
+| 11 | `GET` | `/api/v1/default-router/inmates/{id}` | Any Staff | — | Retrieve single inmate. Authorized clinical/admin staff see nested Medical Record. |
+| 12 | `POST` | `/api/v1/default-router/inmates` | Super Admin | <pre>{<br>  "name": "...",<br>  "alias": "...",<br>  "cell_block": "...",<br>  "referral_diagnosis": "..."<br>}</pre> | Admit an inmate. **Admission Engine** enforces Cell capacity and creates a linked MedicalFile atomically. |
+| 13 | `PATCH` | `/api/v1/default-router/inmates/{id}` | Admin / Security | <pre>{<br>  "cell_block": "Block-C"<br>}</pre> | Transfer inmate. **Transfer Safety Engine** requires a Doctor to have reviewed the file within 7 days, and an Admin within 24hr. |
 
 <br>
 
 ### 5. Medical Records
 
-| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
-|---|--------|----------|-------------|----------------|-------------|
-| 13 | `GET` | `/api/v1/default-router/medical-records` | Super Admin, Medical Staff | — | List medical records. Super Admins see all; Medical Staff see only files assigned to them. Throttled (20/min). |
-| 14 | `GET` | `/api/v1/default-router/medical-records/{id}` | Super Admin, Medical Staff | — | Retrieve a single medical record. Only accessible if assigned to the requesting doctor. Triggers audit log. |
-| 15 | `POST` | `/api/v1/default-router/medical-records` | Super Admin, Medical Staff | `{"inmate": 4, "referral_diagnosis": "DID", "meds": "Risperidone", "assigned_to": 2}` | Create a medical file for an existing inmate. `assigned_to` links the file to a specific doctor (User ID). |
-| 16 | `PATCH` | `/api/v1/default-router/medical-records/{id}` | Super Admin, Medical Staff | `{"internal_diagnosis": "Updated clinical assessment"}` | Update diagnosis or medication. `referral_diagnosis` = external referral; `internal_diagnosis` = in-house clinical assessment (defaults to `"Pending evaluation"`). |
-| 17 | `DELETE` | `/api/v1/default-router/medical-records/{id}` | Super Admin | — | Delete a medical record. |
+> **Note:** Enforces Clinical Ownership. Doctors can only read files assigned to them via `assigned_to` foreign key.
 
-> **Note:** `PUT` is blocked via `http_method_names`. Medical records use **Clinical Ownership** — each file is linked to a specific doctor via `assigned_to`, and Medical Staff can only access their own assigned files. Super Admins bypass this restriction. Medical files are auto-created during inmate admission (see #10) with `referral_diagnosis` pre-populated.
+| # | Method | Endpoint | Authorization | Sample Payload | Description |
+|---|--------|----------|---------------|----------------|-------------|
+| 14 | `GET` | `/api/v1/default-router/medical-records` | Admin / Medical | — | List medical records. Throttled (20/min). |
+| 15 | `GET` | `/api/v1/default-router/medical-records/{id}`| Admin / Medical | — | Retrieve single record. Triggers immutable `DETAILED_READ` audit log. |
+| 16 | `POST`| `/api/v1/default-router/medical-records` | Admin / Medical | <pre>{<br>  "inmate": 4,<br>  "referral_diagnosis": "...",<br>  "assigned_to": 2<br>}</pre> | Explicitly create a file. |
+| 17 | `PATCH`| `/api/v1/default-router/medical-records/{id}`| Admin / Medical | <pre>{<br>  "internal_diagnosis": "..."<br>}</pre> | Update in-house assessment or medication. |
+| 18 | `DELETE`| `/api/v1/default-router/medical-records/{id}`| Super Admin | — | Hard delete a medical record. |
 
 <br>
 
 ### 6. User Group Management
 
-| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
-|---|--------|----------|-------------|----------------|-------------|
-| 18 | `GET` | `/api/v1/default-router/user-groups` | Super Admin | — | List all registered users with their group assignments and active status. |
-| 19 | `GET` | `/api/v1/default-router/user-groups/{id}` | Super Admin | — | View a specific user's details (username, email, groups, is_active). |
-| 20 | `PATCH` | `/api/v1/default-router/user-groups/{id}` | Super Admin | `{"groups": ["Medical Staff"]}` | Assign/change a user's group clearance. |
-| 21 | `PATCH` | `/api/v1/default-router/user-groups/{id}` | Super Admin | `{"groups": []}` | Revoke all group clearance (make user an orphan). |
-| 22 | `PATCH` | `/api/v1/default-router/user-groups/{id}` | Super Admin | `{"is_active": false}` | Soft-delete a user (blocks login while preserving records). |
+> **Note:** `POST` and `DELETE` are blocked. User creation is handled via Djoser.
 
-> **Note:** `POST` and `DELETE` are blocked via `http_method_names`. User creation is handled via Djoser registration (#1). Users are never hard-deleted.
+| # | Method | Endpoint | Authorization | Sample Payload | Description |
+|---|--------|----------|---------------|----------------|-------------|
+| 19 | `GET` | `/api/v1/default-router/user-groups` | Super Admin | — | List all registered users and their groups. |
+| 20 | `GET` | `/api/v1/default-router/user-groups/{id}` | Super Admin | — | View specific user details. |
+| 21 | `PATCH` | `/api/v1/default-router/user-groups/{id}` | Super Admin | <pre>{<br>  "groups": [<br>    "Medical Staff"<br>  ]<br>}</pre> | Assign roles. Sending `[]` revokes all clearance. Sending `{"is_active": false}` soft-deletes the user. |
 
 <br>
 
 ### 7. Cell Block Dashboard
 
-| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
-|---|--------|----------|-------------|----------------|-------------|
-| 23 | `GET` | `/api/v1/default-router/cell-blocks` | Super Admin | — | List all cell blocks with `name`, `max_capacity`, and live `current_count`. Read-only. |
-
-> **Note:** Cell blocks are managed entities with a default capacity of 10. The `current_count` is a computed property reflecting live inmate occupancy. Only Super Admins can view this dashboard.
+| # | Method | Endpoint | Authorization | Sample Payload | Description |
+|---|--------|----------|---------------|----------------|-------------|
+| 22 | `GET` | `/api/v1/default-router/cell-blocks` | Super Admin | — | List all physical blocks with live `current_count` vs `max_capacity`. |
+| 23 | `GET` | `/api/v1/default-router/cell-blocks/{id}` | Super Admin | — | Retrieve specific cell block details. |
 
 <br>
 
 ### 8. Audit Logs
 
-| # | Method | Endpoint | Who Can Call | Sample Payload | Description |
-|---|--------|----------|-------------|----------------|-------------|
-| 24 | `GET` | `/api/v1/default-router/security-logs` | Super Admin | — | List all audit entries (sorted newest first). Throttled (50/min). |
-| 25 | `GET` | `/api/v1/default-router/security-logs/{id}` | Super Admin | — | Retrieve a specific audit log entry. |
+> **Note:** Immutable. All write methods are blocked via `http_method_names`.
 
-> **Note:** Audit logs are auto-generated and **immutable**. All write methods (`POST`, `PUT`, `PATCH`, `DELETE`) are blocked via `http_method_names`. CUD operations are logged via Django Signals; Read operations via the `@audit_read` decorator.
+| # | Method | Endpoint | Authorization | Sample Payload | Description |
+|---|--------|----------|---------------|----------------|-------------|
+| 24 | `GET` | `/api/v1/default-router/security-logs` | Super Admin | — | List all audit entries. Throttled (50/min). |
+| 25 | `GET` | `/api/v1/default-router/security-logs/{id}` | Super Admin | — | Retrieve specific audit log entry. |

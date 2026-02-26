@@ -130,55 +130,64 @@ graph TB
 
     subgraph SEC["🔒 Security Gateway"]
         direction TB
-        AUTH["Identity Verification<br/><i>JWT Token Authentication</i>"]
-        RBAC["Access Control<br/><i>Role-Based Permissions</i>"]
-        THROTTLE["Rate Limiting<br/><i>Anti Brute-Force Protection</i>"]
+        AUTH["Identity Verification<br/><i>JWT Token</i>"]
+        RBAC["Access Control<br/><i>Permissions</i>"]
+        THROTTLE["Rate Limiting<br/><i>Anti-Spam</i>"]
         AUTH --> RBAC --> THROTTLE
     end
 
-    subgraph CORE["⚙️ Core Business Modules"]
-        direction LR
-        IM["📋 Inmate Management<br/><i>Profiles &amp; Cell Assignments</i>"]
-        MR["🏥 Medical Records<br/><i>Diagnosis &amp; Medications</i>"]
+    subgraph CORE["⚙️ Core Business System"]
+        direction TB
+        AE["🚨 Admission Engine<br/><i>Capacity &amp; Intake Rules</i>"]
+        IM["📋 Inmate Management<br/><i>Profiles &amp; Cell Transfers</i>"]
+        MR["🏥 Medical Records<br/><i>Diagnosis &amp; Prescriptions</i>"]
+        UG["👥 Staff &amp; Roster Control<br/><i>User Group Management</i>"]
         AW["🔍 Audit &amp; Watchtower<br/><i>Activity Monitoring</i>"]
+        
+        AUTO["⚡ Auto-Record Engine<br/><i>Automatic Event Capture</i>"]
+        
+        AE --> AUTO
+        IM --> AUTO
+        MR --> AUTO
+        UG --> AUTO
+        AW -.-> AUTO
     end
 
-    subgraph DATA["💾 Information Records"]
+    subgraph DATA["💾 Information Vault"]
         direction LR
-        IR["📁 Inmate Records<br/><i>Profiles &amp; Medical Data</i>"]
+        CB["🏢 Cell Block Ledgers<br/><i>Facility Capacity Data</i>"]
+        IR["📁 Inmate &amp; Medical Vault<br/><i>Restricted Profiles</i>"]
+        UR["🗃️ Personnel Roster<br/><i>Staff Identities &amp; Roles</i>"]
         SL["📜 Security Logs<br/><i>Immutable Action Trail</i>"]
     end
 
-    subgraph AUTO["⚡ Auto-Record Engine"]
-        SIG["Automatic Event Capture<br/><i>Create · Update · Delete · Read</i>"]
-    end
-
-    W --> SEC
-    M --> SEC
-    S --> SEC
-    P --> SEC
+    W -.-> SEC
+    M -.-> SEC
+    S -.-> SEC
+    P -.-> SEC
 
     SEC --> CORE
 
-    IM --> DATA
-    MR --> DATA
-    AW --> SL
+    AE --> CB
+    AE --> IR
+    IM --> CB
+    IM --> IR
+    MR --> IR
+    UG --> UR
 
-    IM --> AUTO
-    MR --> AUTO
+    AW --> SL
     AUTO --> SL
 
-    %% Access matrix
-    W -. "Full Access to All Modules" .-> CORE
-    M -. "Medical Records Only" .-> MR
-    S -. "View Inmates + Transfer" .-> IM
-    P -. "View Inmate Profiles Only" .-> IM
+    %% Access matrix highlights
+    W -. "Full Access" .-> CORE
+    M -. "Medical Only" .-> MR
+    S -. "View + Transfer" .-> IM
+    P -. "View Inmate Profiles" .-> IM
 
     style EXT fill:#1a1a3a,stroke:#4a4a7a,color:#e0e0e0
     style SEC fill:#2a1525,stroke:#8b3a62,color:#e0e0e0
     style CORE fill:#152a20,stroke:#3a8b5a,color:#e0e0e0
     style DATA fill:#1a2535,stroke:#3a6a8b,color:#e0e0e0
-    style AUTO fill:#2a2515,stroke:#8b7a3a,color:#e0e0e0
 
     style W fill:#f5c542,stroke:#c9a030,color:#1a1a2e
     style M fill:#56b4e9,stroke:#3a90c0,color:#1a1a2e
@@ -189,13 +198,17 @@ graph TB
     style RBAC fill:#6b3a6b,stroke:#9b5a9b,color:#e0e0e0
     style THROTTLE fill:#6b3a6b,stroke:#9b5a9b,color:#e0e0e0
 
+    style AE fill:#4a1a1a,stroke:#b84a4a,color:#e0e0e0
     style IM fill:#1a4a2a,stroke:#3a8b5a,color:#e0e0e0
     style MR fill:#1a4a2a,stroke:#3a8b5a,color:#e0e0e0
+    style UG fill:#1a4a2a,stroke:#3a8b5a,color:#e0e0e0
     style AW fill:#1a4a2a,stroke:#3a8b5a,color:#e0e0e0
+    style AUTO fill:#3a3515,stroke:#8b7a3a,color:#e0d0a0
 
-    style IR fill:#1a3a55,stroke:#3a7aab,color:#e0e0e0
-    style SL fill:#1a3a55,stroke:#3a7aab,color:#e0e0e0
-    style SIG fill:#3a3515,stroke:#8b7a3a,color:#e0e0e0
+    style CB fill:#1a3a55,stroke:#56b4e9,color:#e0e0e0
+    style IR fill:#1a3a55,stroke:#56b4e9,color:#e0e0e0
+    style UR fill:#1a3a55,stroke:#56b4e9,color:#e0e0e0
+    style SL fill:#4a2a1a,stroke:#e07a5f,color:#e0e0e0
         </div>
 
         <div class="legend">
@@ -254,12 +267,16 @@ graph TB
                 <p>The Arkham Registry implements a <b>Zero Trust</b> adjacent philosophy. No request enters the core system without passing through the Security Gateway. <b>JWT (JSON Web Tokens)</b> ensure that every actor is who they claim to be, while <b>Group-Based Permissions</b> ensure they can only perform actions authorized for their specific role (e.g., Medical Staff cannot initiate inmate transfers).</p>
             </div>
             <div class="description-card">
+                <h4>🚨 The Admission Engine</h4>
+                <p>Our robust new intake guardrails. Before any new inmate is registered, the Admission Engine enforces strict facility rules: it verifies the target <b>Cell Block Capacity</b> to prevent overcrowding, and enforces <b>Initial Diagnosis Presence</b> to ensure immediate psychological evaluation, generating both physical placement and medical files simultaneously.</p>
+            </div>
+            <div class="description-card">
                 <h4>📋 Core Modules &amp; Business Logic</h4>
-                <p>The system is divided into functional domains. <b>Inmate Management</b> handles the lifecycle of prisoners and their physical location within the Asylum. <b>Medical Records</b> handles sensitive health data, isolated under strict privacy controls. Our <b>Audit &amp; Watchtower</b> module serves as the eyes of the administration, providing full transparency into system usage.</p>
+                <p>The system is divided into functional domains. <b>Inmate Management</b> handles the lifecycle of prisoners and their physical location within the Asylum. <b>Medical Records</b> handles sensitive health data, isolated under strict privacy controls. <b>User Group Management</b> handles role-based clearances for all staff members. Finally, our <b>Audit &amp; Watchtower</b> module serves as the eyes of the administration, providing full transparency into system usage.</p>
             </div>
             <div class="description-card">
                 <h4>📜 The Immutable Audit Trail</h4>
-                <p>Security is enforced not just at the gate, but through constant monitoring. Every significant event—whether it's Dr. Leland updating a diagnosis or Guard Boles moving an inmate—is captured by the <b>Auto-Record Engine</b>. These logs are immutable and can only be viewed by authorized Security Staff or the Warden, ensuring an unfalsifiable record of truth.</p>
+                <p>Security is enforced not just at the gate, but through constant monitoring. Every significant event—whether it's Dr. Leland updating a diagnosis or Guard Boles moving an inmate—is captured by the <b>Auto-Record Engine</b>. Furthermore, our <b>Transfer Safety Engine</b> reads these logs to prevent guards from moving inmates if they haven't been recently cleared by a doctor.</p>
             </div>
         </div>
 

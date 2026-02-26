@@ -17,7 +17,10 @@ class CellBlockSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'max_capacity', 'current_count']
 
 class InmateProfileSerializer(serializers.ModelSerializer):
-    cell_block = serializers.SlugRelatedField(slug_field='name', queryset=CellBlock.objects.all())
+    cell_block = serializers.SlugRelatedField(
+        slug_field='name', 
+        queryset=CellBlock.objects.all()
+    )
     referral_diagnosis = serializers.CharField(max_length=200, write_only=True)
 
     class Meta:

@@ -1,14 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Arkham Asylum Backend — Database ER Model & Schema</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 40%, #16213e 100%);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg,
+                    #0a0a1a 0%,
+                    #1a1a2e 40%,
+                    #16213e 100%);
             color: #e0e0e0;
             min-height: 100vh;
             display: flex;
@@ -16,6 +25,7 @@
             align-items: center;
             padding: 40px 20px;
         }
+
         h1 {
             font-size: 2.2rem;
             margin-bottom: 6px;
@@ -25,12 +35,14 @@
             -webkit-text-fill-color: transparent;
             text-align: center;
         }
+
         .subtitle {
             color: #8892a4;
             font-size: 1rem;
             text-align: center;
             margin-bottom: 40px;
         }
+
         .container {
             width: 100%;
             max-width: 1100px;
@@ -38,20 +50,23 @@
             flex-direction: column;
             gap: 40px;
         }
+
         .mermaid {
             background: #12121f;
             border: 1px solid #2a2a45;
             border-radius: 12px;
             padding: 40px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
+
         .schema-section {
             background: rgba(22, 22, 42, 0.6);
             border: 1px solid #2a2a45;
             border-radius: 12px;
             padding: 32px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
         }
+
         .schema-section h2 {
             color: #e07a5f;
             font-size: 1.4rem;
@@ -62,52 +77,68 @@
             align-items: center;
             gap: 12px;
         }
+
         .table-explanation {
             margin-bottom: 32px;
         }
+
         .table-explanation h3 {
             color: #f5c542;
             font-size: 1.1rem;
             margin-bottom: 12px;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: "Courier New", Courier, monospace;
         }
+
         .table-explanation p {
             color: #b0b8c8;
             line-height: 1.6;
             margin-bottom: 16px;
             font-size: 0.95rem;
         }
+
         .field-list {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.85rem;
         }
-        .field-list th, .field-list td {
+
+        .field-list th,
+        .field-list td {
             text-align: left;
             padding: 12px 16px;
             border-bottom: 1px solid #2a2a45;
         }
+
         .field-list th {
             color: #8892a4;
             text-transform: uppercase;
             letter-spacing: 1px;
             font-size: 0.75rem;
-            background: rgba(255,255,255,0.03);
+            background: rgba(255, 255, 255, 0.03);
         }
-        .field-list td { color: #e0e0e0; }
+
+        .field-list td {
+            color: #e0e0e0;
+        }
+
         .field-list td code {
             background: #1e1e35;
             padding: 2px 6px;
             border-radius: 4px;
             color: #e07a5f;
         }
-        .field-list td .type { color: #56b4e9; }
+
+        .field-list td .type {
+            color: #56b4e9;
+        }
+
         .relationship-note {
             margin-top: 12px;
             font-size: 0.85rem;
             color: #e8a730;
             font-style: italic;
         }
+
         footer {
             margin-top: 60px;
             color: #555;
@@ -116,61 +147,212 @@
         }
     </style>
 </head>
-<body>
 
+<body>
     <h1>🦇 Arkham Asylum — Database ER Model & Schema</h1>
-    <p class="subtitle">Entity-Relationship Visualizer &amp; Technical Field Documentation</p>
+    <p class="subtitle">
+        Entity-Relationship Visualizer &amp; Technical Field Documentation
+    </p>
 
     <div class="container">
-        
         <!-- VISUAL ER MODEL -->
         <div class="mermaid">
-erDiagram
-    InmateProfile ||--|| MedicalFile : "has record"
-    InmateProfile ||--o{ AuditLog : "target of"
-    MedicalFile ||--o{ AuditLog : "target of"
+            erDiagram
+            %% Core Entities
+            User ||--o{ MedicalFile : "assigned to"
+            CellBlock ||--o{ InmateProfile : "houses"
+            InmateProfile ||--|| MedicalFile : "has record"
 
-    InmateProfile {
-        int id PK
-        string name "Max 100"
-        string alias "Max 50"
-        string cell_block "Max 20"
-    }
+            %% Audit Trails
+            User ||--o{ AuditLog : "creates"
+            InmateProfile ||--o{ AuditLog : "target of"
+            MedicalFile ||--o{ AuditLog : "target of"
 
-    MedicalFile {
-        int id PK
-        int inmate_id FK "OneToOne"
-        string diagnosis "Max 100"
-        string meds "Max 150"
-    }
+            User {
+            int id PK
+            string username "Max 150"
+            string email "Max 254"
+            string groups "ManyToMany"
+            boolean is_active "Soft Delete"
+            }
 
-    AuditLog {
-        int id PK
-        string actor_name "Max 100"
-        string action_type "Max 50"
-        string target_model "Max 50"
-        int target_id
-        datetime timestamp
-    }
+            CellBlock {
+            int id PK
+            string name "Max 20, Unique"
+            int max_capacity "Default 10"
+            int current_count "Dynamic Property"
+            }
+
+            InmateProfile {
+            int id PK
+            string name "Max 100"
+            string alias "Max 50"
+            int cell_block_id FK "ManyToOne"
+            string status "ACTIVE/DISCHARGED"
+            }
+
+            MedicalFile {
+            int id PK
+            int inmate_id FK "OneToOne"
+            string referral_diagnosis "Max 200"
+            text internal_diagnosis "Blank: True"
+            string meds "Max 150"
+            int assigned_to_id FK "ManyToOne"
+            }
+
+            AuditLog {
+            int id PK
+            int user_id FK "ManyToOne"
+            string actor_name "Max 100"
+            string actor_group "Max 50"
+            string action_type "Max 50"
+            string target_model "Max 50"
+            int target_id
+            datetime timestamp
+            }
         </div>
 
         <!-- DETAILED SCHEMA EXPLANATION -->
         <div class="schema-section">
             <h2>📜 Data Dictionary &amp; Logic</h2>
 
+            <!-- Table: User (auth_user) -->
+            <div class="table-explanation">
+                <h3>TABLE: auth_user (Django Built-In)</h3>
+                <p>
+                    The core identity table for all staff members (Warden, Medical Staff, Security Staff).
+                    Authentication is handled via Djoser &amp; SimpleJWT. Clearances are managed via the standard
+                    <code>groups</code> ManyToMany relationship.
+                </p>
+                <table class="field-list">
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Constraints</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>id</code></td>
+                            <td><span class="type">Integer</span></td>
+                            <td>Primary Key</td>
+                            <td>System unique identifier</td>
+                        </tr>
+                        <tr>
+                            <td><code>username</code></td>
+                            <td><span class="type">Varchar(150)</span></td>
+                            <td>Required, Unique</td>
+                            <td>Login credential and Audit Trail identifier</td>
+                        </tr>
+                        <tr>
+                            <td><code>groups</code></td>
+                            <td><span class="type">ManyToMany</span></td>
+                            <td>auth_group</td>
+                            <td>Determines role-based access (Medical, Security, etc)</td>
+                        </tr>
+                        <tr>
+                            <td><code>is_active</code></td>
+                            <td><span class="type">Boolean</span></td>
+                            <td>Default: True</td>
+                            <td>Used for soft-deleting staff without breaking Audit FKs</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table: CellBlock -->
+            <div class="table-explanation">
+                <h3>TABLE: arkham_app_cellblock</h3>
+                <p>
+                    The facility infrastructure ledger. This table tracks
+                    the physical cell blocks and enforces capacity limits
+                    during inmate admissions.
+                </p>
+                <table class="field-list">
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Constraints</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>id</code></td>
+                            <td><span class="type">Integer</span></td>
+                            <td>Primary Key</td>
+                            <td>System unique identifier</td>
+                        </tr>
+                        <tr>
+                            <td><code>name</code></td>
+                            <td><span class="type">Varchar(20)</span></td>
+                            <td>Required, Unique</td>
+                            <td>Name of the physical block (e.g., Block-A)</td>
+                        </tr>
+                        <tr>
+                            <td><code>max_capacity</code></td>
+                            <td><span class="type">Integer</span></td>
+                            <td>Default: 10</td>
+                            <td>Admission Engine utilizes this to reject overflows</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="relationship-note">
+                    🔍 LOGIC: Features a dynamic <code>current_count</code> property that reverse-calculates active
+                    inmates on the fly.
+                </p>
+            </div>
+
             <!-- Table: InmateProfile -->
             <div class="table-explanation">
                 <h3>TABLE: arkham_app_inmateprofile</h3>
-                <p>The primary entity representing individuals incarcerated within the Asylum. This table stores non-sensitive identity data and physical location within the facility.</p>
+                <p>
+                    The primary entity representing individuals incarcerated
+                    within the Asylum.
+                </p>
                 <table class="field-list">
                     <thead>
-                        <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Purpose</th></tr>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Constraints</th>
+                            <th>Purpose</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        <tr><td><code>id</code></td><td><span class="type">Integer</span></td><td>Primary Key, Auto-Increment</td><td>System unique identifier</td></tr>
-                        <tr><td><code>name</code></td><td><span class="type">Varchar(100)</span></td><td>Required</td><td>Legal or birth name of the inmate</td></tr>
-                        <tr><td><code>alias</code></td><td><span class="type">Varchar(50)</span></td><td>Required</td><td>Known criminal moniker or supervillain persona</td></tr>
-                        <tr><td><code>cell_block</code></td><td><span class="type">Varchar(20)</span></td><td>Required</td><td>Current housing assignment within Arkham</td></tr>
+                        <tr>
+                            <td><code>id</code></td>
+                            <td><span class="type">Integer</span></td>
+                            <td>Primary Key</td>
+                            <td>System unique identifier</td>
+                        </tr>
+                        <tr>
+                            <td><code>name</code></td>
+                            <td><span class="type">Varchar(100)</span></td>
+                            <td>Required</td>
+                            <td>Legal or birth name of the inmate</td>
+                        </tr>
+                        <tr>
+                            <td><code>alias</code></td>
+                            <td><span class="type">Varchar(50)</span></td>
+                            <td>Required</td>
+                            <td>Known criminal moniker or supervillain persona</td>
+                        </tr>
+                        <tr>
+                            <td><code>cell_block_id</code></td>
+                            <td><span class="type">Integer</span></td>
+                            <td>Required, FK</td>
+                            <td>Link to <code>CellBlock</code> table. Shielded by Transfer Safety Engine.</td>
+                        </tr>
+                        <tr>
+                            <td><code>status</code></td>
+                            <td><span class="type">Varchar(20)</span></td>
+                            <td>Default: ACTIVE</td>
+                            <td>ACTIVE or DISCHARGED (Soft Delete mechanism)</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -178,64 +360,160 @@ erDiagram
             <!-- Table: MedicalFile -->
             <div class="table-explanation">
                 <h3>TABLE: arkham_app_medicalfile</h3>
-                <p>Stores highly sensitive psycho-medical data. Access to this table is strictly throttled and restricted to Medical Staff. It shares a strict life-cycle with the Inmate record.</p>
+                <p>
+                    Stores highly sensitive psycho-medical data. Access to
+                    this table is strictly throttled and restricted to
+                    Medical Staff &amp; Super Admins.
+                </p>
                 <table class="field-list">
                     <thead>
-                        <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Purpose</th></tr>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Constraints</th>
+                            <th>Purpose</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        <tr><td><code>id</code></td><td><span class="type">Integer</span></td><td>Primary Key, Auto-Increment</td><td>System unique identifier</td></tr>
-                        <tr><td><code>inmate_id</code></td><td><span class="type">Integer</span></td><td>Unique, Foreign Key</td><td>Link to <code>InmateProfile</code> (Strict 1:1)</td></tr>
-                        <tr><td><code>diagnosis</code></td><td><span class="type">Varchar(100)</span></td><td>Required</td><td>The primary psychological/medical finding</td></tr>
-                        <tr><td><code>meds</code></td><td><span class="type">Varchar(150)</span></td><td>Required</td><td>Current prescribed medication regimen</td></tr>
+                        <tr>
+                            <td><code>id</code></td>
+                            <td><span class="type">Integer</span></td>
+                            <td>Primary Key</td>
+                            <td>System unique identifier</td>
+                        </tr>
+                        <tr>
+                            <td><code>inmate_id</code></td>
+                            <td><span class="type">Integer</span></td>
+                            <td>Unique, FK</td>
+                            <td>Link to <code>InmateProfile</code> (Strict 1:1)</td>
+                        </tr>
+                        <tr>
+                            <td><code>assigned_to_id</code></td>
+                            <td><span class="type">Integer</span></td>
+                            <td>FK (auth_user)</td>
+                            <td>The clinical owner (Doctor). Dictates read access.</td>
+                        </tr>
+                        <tr>
+                            <td><code>referral_diagnosis</code></td>
+                            <td><span class="type">Varchar(200)</span></td>
+                            <td>Required</td>
+                            <td>Initial reason for admission (Enforced by Admission Engine)</td>
+                        </tr>
+                        <tr>
+                            <td><code>internal_diagnosis</code></td>
+                            <td><span class="type">Text</span></td>
+                            <td>Blank=True</td>
+                            <td>Ongoing clinical assessment (Default: Pending evaluation)</td>
+                        </tr>
+                        <tr>
+                            <td><code>meds</code></td>
+                            <td><span class="type">Varchar(150)</span></td>
+                            <td>Required</td>
+                            <td>Current prescribed medication regimen</td>
+                        </tr>
                     </tbody>
                 </table>
-                <p class="relationship-note">⚠️ RELATIONSHIP: One-To-One. Deleting an InmateProfile will automatically cascade and delete their MedicalFile.</p>
+                <p class="relationship-note">
+                    ⚠️ RELATIONSHIP: One-To-One. Created atomically with InmateProfile using
+                    <code>transaction.atomic()</code>.
+                </p>
             </div>
 
             <!-- Table: AuditLog -->
             <div class="table-explanation">
                 <h3>TABLE: arkham_app_auditlog</h3>
-                <p>A chronological record of all significant system actions. This table is write-only for the application (via signals/decorators) and read-only for high-level security staff.</p>
+                <p>
+                    A chronological, immutable record of all system activity. Read actively by the Transfer Safety
+                    Engine.
+                </p>
                 <table class="field-list">
                     <thead>
-                        <tr><th>Field</th><th>Type</th><th>Constraints</th><th>Purpose</th></tr>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Constraints</th>
+                            <th>Purpose</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        <tr><td><code>id</code></td><td><span class="type">Integer</span></td><td>Primary Key, Auto-Increment</td><td>System unique identifier</td></tr>
-                        <tr><td><code>actor_name</code></td><td><span class="type">Varchar(100)</span></td><td>Required</td><td>Username of the person who took the action</td></tr>
-                        <tr><td><code>action_type</code></td><td><span class="type">Varchar(50)</span></td><td>Required</td><td>CREATE, UPDATE, DELETE, or READ</td></tr>
-                        <tr><td><code>target_model</code></td><td><span class="type">Varchar(50)</span></td><td>Required</td><td>Which entity was affected (e.g., InmateProfile)</td></tr>
-                        <tr><td><code>target_id</code></td><td><span class="type">Integer</span></td><td>Required</td><td>The PK of the affected entity</td></tr>
-                        <tr><td><code>timestamp</code></td><td><span class="type">DateTime</span></td><td>Auto-set on creation</td><td>Exact server time of the event</td></tr>
+                        <tr>
+                            <td><code>id</code></td>
+                            <td><span class="type">Integer</span></td>
+                            <td>Primary Key</td>
+                            <td>System unique identifier</td>
+                        </tr>
+                        <tr>
+                            <td><code>user_id</code></td>
+                            <td><span class="type">Integer</span></td>
+                            <td>FK (auth_user)</td>
+                            <td>The actor behind the request</td>
+                        </tr>
+                        <tr>
+                            <td><code>actor_name</code></td>
+                            <td><span class="type">Varchar(100)</span></td>
+                            <td>Required</td>
+                            <td>Username snapshot (preserves log if user is deleted)</td>
+                        </tr>
+                        <tr>
+                            <td><code>actor_group</code></td>
+                            <td><span class="type">Varchar(50)</span></td>
+                            <td>Required</td>
+                            <td>Role snapshot</td>
+                        </tr>
+                        <tr>
+                            <td><code>action_type</code></td>
+                            <td><span class="type">Varchar(50)</span></td>
+                            <td>Required</td>
+                            <td>CREATE, UPDATE, DELETE, or DETAILED_READ</td>
+                        </tr>
+                        <tr>
+                            <td><code>target_model</code></td>
+                            <td><span class="type">Varchar(50)</span></td>
+                            <td>Required</td>
+                            <td>e.g., InmateProfile, MedicalFile</td>
+                        </tr>
+                        <tr>
+                            <td><code>target_id</code></td>
+                            <td><span class="type">Integer</span></td>
+                            <td>Required</td>
+                            <td>The PK of the affected entity</td>
+                        </tr>
+                        <tr>
+                            <td><code>timestamp</code></td>
+                            <td><span class="type">DateTime</span></td>
+                            <td>Auto-set</td>
+                            <td>Exact server time of the event</td>
+                        </tr>
                     </tbody>
                 </table>
-                <p class="relationship-note">🔍 LOGIC: Ordered by <code>-timestamp</code>. Entries are generated automatically by Django Signals and custom ViewSet decorators.</p>
             </div>
         </div>
-
     </div>
 
-    <footer>Arkham Asylum Registry — Database Documentation &bull; Developed for Gotham City Administration</footer>
+    <footer>
+        Arkham Asylum Registry — Database Documentation &bull; Developed for
+        Gotham City Administration
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
     <script>
         mermaid.initialize({
             startOnLoad: true,
-            theme: 'dark',
+            theme: "dark",
             themeVariables: {
                 darkMode: true,
-                background: '#12121f',
-                primaryColor: '#2a2a45',
-                primaryTextColor: '#e0e0e0',
-                lineColor: '#e07a5f',
-                fontSize: '13px'
+                background: "#12121f",
+                primaryColor: "#2a2a45",
+                primaryTextColor: "#e0e0e0",
+                lineColor: "#e07a5f",
+                fontSize: "13px",
             },
             er: {
                 useMaxWidth: true,
-                padding: 15
-            }
+                padding: 15,
+            },
         });
     </script>
 </body>
+
 </html>

@@ -1,20 +1,10 @@
 # 🦇 Arkham Asylum Backend - Digital Forensic Psychiatric Hospital
 
-A robust, Zero-Trust backend system designed for the secure management of Gotham's most dangerous criminals. This Django REST Framework (DRF) project enforces strict Role-Based Access Control (RBAC), immutable audit logging, and atomic database transactions to ensure data integrity across highly classified medical and security records.
+A robust, Zero-Trust backend system designed for the secure management of Gotham's most dangerous criminals. Operating seamlessly across **25+ distinct API endpoints**, the registry serves as a digital fortress that bridges strict carceral containment with highly sensitive psychiatric care.
 
 <br>
 
-## 🏛️ Architecture Documentation
-
-The repository contains three interactive `mermaid.js` diagrams detailing the exact flow and constraints of the system. Open these HTML files directly in any web browser to view the system visualization:
-
-*   **`solution_architecture.html`**: High-level module interaction for Business Stakeholders.
-*   **`technical_architecture.html`**: Low-level Django/DRF request lifecycles, middlewares, and throttles.
-*   **`database_er_model.html`**: Exact Database Schema, relationships, and constraints.
-
-<br>
-
-## 💻 Technology Stack & AI
+## Technology Stack & AI
 
 **Core Infrastructure...**
 *   **Backend Framework:** Python, Django REST Framework (DRF)
@@ -25,23 +15,33 @@ The repository contains three interactive `mermaid.js` diagrams detailing the ex
 <br>
 
 **LLM Collaborators...**
-*   **Antigravity (Google AI Pro):** Orchestrated core Backend logics, database structuring, and rigorous backend engine design.
+*   **AntiGravity (Google AI Pro):** Orchestrated core Backend logics, database structuring, and rigorous backend engine design.
 *   **Perplexity Pro:** Utilized for high-level research and requirements extension in a logical, architectural way.
 *   **OpenClaw (`openai-gpt5-chat-latest`):** Provided OS-level project control, contextual awareness, and overarching advisory guidance.
 
 <br>
 
-## ✨ Key Features
+## Key Features
 
-1.  **🚨 The Admission Engine:** A robust ingestion guardrail. Employs `transaction.atomic()` to guarantee that an `InmateProfile` and their highly classified `MedicalFile` are created simultaneously with zero ghost records. It natively evaluates live `CellBlock` capacity, outright rejecting an admission if the facility is full.
+1.  **The Admission Engine:** A robust ingestion guardrail. Employs `transaction.atomic()` to guarantee that an `InmateProfile` and their highly classified `MedicalFile` are created simultaneously with zero ghost records. It natively evaluates live `CellBlock` capacity, outright rejecting an admission if the facility is full.
 
-2.  **🛡️ Transfer Safety Engine:** A proactive security protocol reading directly from the immutable audit stream. Guards cannot transfer an inmate to a new Cell Block unless a certified Doctor has reviewed their Medical File within 7 days, and a Super Admin within 24 hours.
+2.  **Transfer Safety Engine:** A proactive security protocol reading directly from the immutable audit stream. Guards cannot transfer an inmate to a new Cell Block unless a certified Doctor has reviewed their Medical File within 7 days, and a Super Admin within 24 hours.
 
-3.  **📜 Immutable Audit Logging & Zero-Trust:** Every CUD (Create, Update, Delete) operation is captured automatically via `signals.py`. Every READ operation is logged via a custom `@audit_read` decorator. Layered beneath StrictDjangoModelPermissions, Group-based clearances (RBAC) and scoped Throttling.
+3.  **Immutable Audit Logging & Zero-Trust:** Every CUD (Create, Update, Delete) operation is captured automatically via `signals.py`. Every READ operation is logged via a custom `@audit_read` decorator. Layered beneath StrictDjangoModelPermissions, Group-based clearances (RBAC) and scoped Throttling.
 
 <br>
 
-## 🚀 Quick Start & Local Setup
+## Architecture Documentation
+
+The repository contains three interactive `mermaid.js` diagrams detailing the exact flow and constraints of the system. Open these HTML files directly in any web browser to view the system visualization:
+
+*   **`solution_architecture.html`**: High-level module interaction for Business Stakeholders.
+*   **`technical_architecture.html`**: Low-level Django/DRF request lifecycles, middlewares, and throttles.
+*   **`database_er_model.html`**: Exact Database Schema, relationships, and constraints.
+
+<br>
+
+## Quick Start & Local Setup
 
 ### 1. Clone the Repository
 ```bash
@@ -76,7 +76,7 @@ python manage.py runserver 8000
 
 <br>
 
-## 🔌 API Endpoints Reference
+## API Endpoints Reference
 
 Base URL: `http://127.0.0.1:8000`
 
@@ -105,7 +105,6 @@ Base URL: `http://127.0.0.1:8000`
 | 3 | `POST` | `/api/auth/jwt/create/` | Registered User | <pre>{<br>  "username": "...",<br>  "password": "..."<br>}</pre> | Login — returns `access` (45 min) and `refresh` (4 days) tokens. |
 | 4 | `POST` | `/api/auth/jwt/refresh/` | Registered User | <pre>{<br>  "refresh": "..."<br>}</pre> | Get a new access token. |
 | 5 | `POST` | `/api/auth/jwt/verify/` | Registered User | <pre>{<br>  "token": "..."<br>}</pre> | Verify if a token is valid. |
-| 6 | `GET` | `/api/auth/users/me/` | Authenticated | — | Test the access token by viewing your own profile. |
 
 <br>
 
@@ -113,9 +112,9 @@ Base URL: `http://127.0.0.1:8000`
 
 | # | Method | Endpoint | Authorization | Sample Payload | Description |
 |---|--------|----------|---------------|----------------|-------------|
-| 7 | `GET` | `/api/auth/users/me/` | Authenticated | — | View own profile. |
-| 8 | `PATCH` | `/api/auth/users/me/` | Authenticated | <pre>{<br>  "email": "..."<br>}</pre> | Update own profile details. |
-| 9 | `POST` | `/api/auth/users/set_password/` | Authenticated | <pre>{<br>  "current_password": "...",<br>  "new_password": "..."<br>}</pre> | Change own password. |
+| 6 | `GET` | `/api/auth/users/me/` | Authenticated | <pre>{<br>  "token": "..."<br>}</pre> | View own profile. |
+| 7 | `PATCH` | `/api/auth/users/me/` | Authenticated | <pre>{<br>  "email": "..."<br>}</pre> | Update own profile details. |
+| 8 | `POST` | `/api/auth/users/set_password/` | Authenticated | <pre>{<br>  "current_password": "...",<br>  "new_password": "..."<br>}</pre> | Change own password. |
 
 <br>
 
@@ -125,10 +124,10 @@ Base URL: `http://127.0.0.1:8000`
 
 | # | Method | Endpoint | Authorization | Sample Payload | Description |
 |---|--------|----------|---------------|----------------|-------------|
-| 10 | `GET` | `/api/v1/default-router/inmates` | Any Staff | — | List all inmates. Supports `?cell_block=` filter. |
-| 11 | `GET` | `/api/v1/default-router/inmates/{id}` | Any Staff | — | Retrieve single inmate. Authorized clinical/admin staff see nested Medical Record. |
-| 12 | `POST` | `/api/v1/default-router/inmates` | Super Admin | <pre>{<br>  "name": "...",<br>  "alias": "...",<br>  "cell_block": "...",<br>  "referral_diagnosis": "..."<br>}</pre> | Admit an inmate. **Admission Engine** enforces Cell capacity and creates a linked MedicalFile atomically. |
-| 13 | `PATCH` | `/api/v1/default-router/inmates/{id}` | Admin / Security | <pre>{<br>  "cell_block": "Block-C"<br>}</pre> | Transfer inmate. **Transfer Safety Engine** requires a Doctor to have reviewed the file within 7 days, and an Admin within 24hr. |
+| 9 | `GET` | `/api/v1/default-router/inmates` | Any Staff | — | List all inmates. Supports `?cell_block=` filter. |
+| 10 | `GET` | `/api/v1/default-router/inmates/{id}` | Any Staff | — | Retrieve single inmate. Authorized clinical/admin staff see nested Medical Record. |
+| 11 | `POST` | `/api/v1/default-router/inmates` | Super Admin | <pre>{<br>  "name": "...",<br>  "alias": "...",<br>  "cell_block": "...",<br>  "referral_diagnosis": "..."<br>}</pre> | Admit an inmate. **Admission Engine** enforces Cell capacity and creates a linked MedicalFile atomically. |
+| 12 | `PATCH` | `/api/v1/default-router/inmates/{id}` | Admin / Security | <pre>{<br>  "cell_block": "Block-C"<br>}</pre> | Transfer inmate. **Transfer Safety Engine** requires a Doctor to have reviewed the file within 7 days, and an Admin within 24hr. |
 
 <br>
 
@@ -138,11 +137,11 @@ Base URL: `http://127.0.0.1:8000`
 
 | # | Method | Endpoint | Authorization | Sample Payload | Description |
 |---|--------|----------|---------------|----------------|-------------|
-| 14 | `GET` | `/api/v1/default-router/medical-records` | Admin / Medical | — | List medical records. Throttled (20/min). |
-| 15 | `GET` | `/api/v1/default-router/medical-records/{id}`| Admin / Medical | — | Retrieve single record. Triggers immutable `DETAILED_READ` audit log. |
-| 16 | `POST`| `/api/v1/default-router/medical-records` | Admin / Medical | <pre>{<br>  "inmate": 4,<br>  "referral_diagnosis": "...",<br>  "assigned_to": 2<br>}</pre> | Explicitly create a file. |
-| 17 | `PATCH`| `/api/v1/default-router/medical-records/{id}`| Admin / Medical | <pre>{<br>  "internal_diagnosis": "..."<br>}</pre> | Update in-house assessment or medication. |
-| 18 | `DELETE`| `/api/v1/default-router/medical-records/{id}`| Super Admin | — | Hard delete a medical record. |
+| 13 | `GET` | `/api/v1/default-router/medical-records` | Admin / Medical | — | List medical records. Throttled (20/min). |
+| 14 | `GET` | `/api/v1/default-router/medical-records/{id}`| Admin / Medical | — | Retrieve single record. Triggers immutable `DETAILED_READ` audit log. |
+| 15 | `POST`| `/api/v1/default-router/medical-records` | Admin / Medical | <pre>{<br>  "inmate": 4,<br>  "referral_diagnosis": "...",<br>  "assigned_to": 2<br>}</pre> | Explicitly create a file. |
+| 16 | `PATCH`| `/api/v1/default-router/medical-records/{id}`| Admin / Medical | <pre>{<br>  "internal_diagnosis": "..."<br>}</pre> | Update in-house assessment or medication. |
+| 17 | `DELETE`| `/api/v1/default-router/medical-records/{id}`| Super Admin | — | Hard delete a medical record. |
 
 <br>
 
@@ -152,9 +151,9 @@ Base URL: `http://127.0.0.1:8000`
 
 | # | Method | Endpoint | Authorization | Sample Payload | Description |
 |---|--------|----------|---------------|----------------|-------------|
-| 19 | `GET` | `/api/v1/default-router/user-groups` | Super Admin | — | List all registered users and their groups. |
-| 20 | `GET` | `/api/v1/default-router/user-groups/{id}` | Super Admin | — | View specific user details. |
-| 21 | `PATCH` | `/api/v1/default-router/user-groups/{id}` | Super Admin | <pre>{<br>  "groups": [<br>    "Medical Staff"<br>  ]<br>}</pre> | Assign roles. Sending `[]` revokes all clearance. Sending `{"is_active": false}` soft-deletes the user. |
+| 18 | `GET` | `/api/v1/default-router/user-groups` | Super Admin | — | List all registered users and their groups. |
+| 19 | `GET` | `/api/v1/default-router/user-groups/{id}` | Super Admin | — | View specific user details. |
+| 20 | `PATCH` | `/api/v1/default-router/user-groups/{id}` | Super Admin | <pre>{<br>  "groups": [<br>    "Medical Staff"<br>  ]<br>}</pre> | Assign roles. Sending `[]` revokes all clearance. Sending `{"is_active": false}` soft-deletes the user. |
 
 <br>
 
@@ -162,8 +161,8 @@ Base URL: `http://127.0.0.1:8000`
 
 | # | Method | Endpoint | Authorization | Sample Payload | Description |
 |---|--------|----------|---------------|----------------|-------------|
-| 22 | `GET` | `/api/v1/default-router/cell-blocks` | Super Admin | — | List all physical blocks with live `current_count` vs `max_capacity`. |
-| 23 | `GET` | `/api/v1/default-router/cell-blocks/{id}` | Super Admin | — | Retrieve specific cell block details. |
+| 21 | `GET` | `/api/v1/default-router/cell-blocks` | Super Admin | — | List all physical blocks with live `current_count` vs `max_capacity`. |
+| 22 | `GET` | `/api/v1/default-router/cell-blocks/{id}` | Super Admin | — | Retrieve specific cell block details. |
 
 <br>
 
@@ -173,5 +172,5 @@ Base URL: `http://127.0.0.1:8000`
 
 | # | Method | Endpoint | Authorization | Sample Payload | Description |
 |---|--------|----------|---------------|----------------|-------------|
-| 24 | `GET` | `/api/v1/default-router/security-logs` | Super Admin | — | List all audit entries. Throttled (50/min). |
-| 25 | `GET` | `/api/v1/default-router/security-logs/{id}` | Super Admin | — | Retrieve specific audit log entry. |
+| 23 | `GET` | `/api/v1/default-router/security-logs` | Super Admin | — | List all audit entries. Throttled (50/min). |
+| 24 | `GET` | `/api/v1/default-router/security-logs/{id}` | Super Admin | — | Retrieve specific audit log entry. |

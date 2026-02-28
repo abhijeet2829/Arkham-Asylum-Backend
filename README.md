@@ -7,27 +7,29 @@ A robust, Zero-Trust backend system designed for the secure management of Gotham
 ## Technology Stack & AI
 
 **Core Infrastructure...**
-*   **Backend Framework:** Python, Django REST Framework (DRF)
-*   **Database:** MySQL Workbench 8.0
-*   **Authentication:** Djoser, SimpleJWT (JSON Web Tokens)
-*   **Architecture Mapping:** Mermaid.js
+
+* **Backend Framework:** Python, Django REST Framework (DRF)
+* **Database:** MySQL Workbench 8.0
+* **Authentication:** Djoser, SimpleJWT (JSON Web Tokens)
+* **Architecture Mapping:** Mermaid.js
 
 <br>
 
 **LLM Collaborators...**
-*   **AntiGravity (Google AI Pro):** Orchestrated core Backend logics, database structuring, and rigorous backend engine design.
-*   **Perplexity Pro:** Utilized for high-level research and requirements extension in a logical, architectural way.
-*   **OpenClaw (`openai-gpt5-chat-latest`):** Provided OS-level project control, contextual awareness, and overarching advisory guidance.
+
+* **AntiGravity (Google AI Pro):** Orchestrated core Backend logics, database structuring, and rigorous backend engine design.
+* **Perplexity Pro:** Utilized for high-level research and requirements extension in a logical, architectural way.
+* **OpenClaw (`openai-gpt5-chat-latest`):** Provided OS-level project control, contextual awareness, and overarching advisory guidance.
 
 <br>
 
 ## Key Features
 
-1.  **The Admission Engine:** A robust ingestion guardrail. Employs `transaction.atomic()` to guarantee that an `InmateProfile` and their highly classified `MedicalFile` are created simultaneously with zero ghost records. It natively evaluates live `CellBlock` capacity, outright rejecting an admission if the facility is full.
+1. **The Admission Engine:** A robust ingestion guardrail. Employs `transaction.atomic()` to guarantee that an `InmateProfile` and their highly classified `MedicalFile` are created simultaneously with zero ghost records. It natively evaluates live `CellBlock` capacity, outright rejecting an admission if the facility is full.
 
-2.  **Transfer Safety Engine:** A proactive security protocol reading directly from the immutable audit stream. Guards cannot transfer an inmate to a new Cell Block unless a certified Doctor has reviewed their Medical File within 7 days, and a Super Admin within 24 hours.
+2. **Transfer Safety Engine:** A proactive security protocol reading directly from the immutable audit stream. Guards cannot transfer an inmate to a new Cell Block unless a certified Doctor has reviewed their Medical File within 7 days, and a Super Admin within 24 hours.
 
-3.  **Immutable Audit Logging & Zero-Trust:** Every CUD (Create, Update, Delete) operation is captured automatically via `signals.py`. Every READ operation is logged via a custom `@audit_read` decorator. Layered beneath StrictDjangoModelPermissions, Group-based clearances (RBAC) and scoped Throttling.
+3. **Immutable Audit Logging & Zero-Trust:** Every CUD (Create, Update, Delete) operation is captured automatically via `signals.py`. Every READ operation is logged via a custom `@audit_read` decorator. Layered beneath StrictDjangoModelPermissions, Group-based clearances (RBAC) and scoped Throttling.
 
 <br>
 
@@ -35,44 +37,96 @@ A robust, Zero-Trust backend system designed for the secure management of Gotham
 
 The repository contains three interactive `mermaid.js` diagrams detailing the exact flow and constraints of the system. Open these HTML files directly in any web browser to view the system visualization:
 
-*   **`solution_architecture.html`**: High-level module interaction for Business Stakeholders.
-*   **`technical_architecture.html`**: Low-level Django/DRF request lifecycles, middlewares, and throttles.
-*   **`database_er_model.html`**: Exact Database Schema, relationships, and constraints.
+* **`solution_architecture.html`**: High-level module interaction for Business Stakeholders.
+* **`technical_architecture.html`**: Low-level Django/DRF request lifecycles, middlewares, and throttles.
+* **`database_er_model.html`**: Exact Database Schema, relationships, and constraints.
 
 <br>
 
 ## Quick Start & Local Setup
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/your-username/arkham-asylum-backend.git
 cd arkham-asylum-backend
 ```
 
 ### 2. Set Up Virtual Environment
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows use: venv\Scripts\activate
 ```
 
 ### 3. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Database Setup (MySQL 8.0)
+### 4. Database Setup
+
 Log into your local MySQL workbench and create the database:
+
 ```sql
 CREATE DATABASE arkham_registry;
 ```
+
 *Note: Update `arkham_pm/settings.py` with your MySQL credentials.*
 
 ### 5. Run Migrations & Start Server
+
 ```bash
 python manage.py makemigrations
 python manage.py migrate
 python manage.py runserver 8000
 ```
+
+### 6. Populate Baseline Data (Optional)
+
+To prevent manual data entry via Postman, Arkham features an automated database seeder. This will inject 10 comprehensive Inmates, linked Medical Files, 4 Security Clearance Groups, 3 Cell Blocks, and 10 Active Personnel directly into your local database.
+
+```bash
+python manage.py seed_arkham
+```
+
+### 7. Run PyTest Functional/Automation Suite (Optional)
+
+To verify the structural integrity of all 24 API endpoints locally, execute the headless PyTest suite against the project.
+
+```bash
+pytest -v
+```
+
+### 8. Run Performance Test Suite (Optional)
+
+To execute the Arkham Asylum load-testing swarm and monitor response behavior under heavy personnel traffic:
+
+```bash
+cd "Performance Test"
+locust -f locustfile.py
+```
+
+Open `http://localhost:8089` in your local browser to configure the swarm.
+
+**Sample Parameters to input:**
+
+* **Number of users:** `100`
+* **Spawn rate:** `10`
+* **Host:** `http://127.0.0.1:8000`
+
+Click "Start swarming" to commence load testing. Stop after few secs & analyze the results.
+
+### 9. Run Security Audit (Optional)
+
+To grade the system's Django production settings and view inherently unmitigated local vulnerabilities:
+
+```bash
+python manage.py check --deploy
+```
+
+*Note: The warnings raised here are intentional for development functionality. For mitigation strategies, refer to the `Security Tests` directory.*
 
 <br>
 

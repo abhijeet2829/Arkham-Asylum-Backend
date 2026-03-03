@@ -39,6 +39,23 @@ A robust, Zero-Trust backend system designed for the secure management of Gotham
 
 <br>
 
+## Security Architecture
+
+The system implements a layered Zero-Trust security model across every request lifecycle — from authentication at the gate to immutable logging of every record touched.
+
+| Security Control | Implementation |
+|---|---|
+| **Authentication** | Djoser + SimpleJWT — 45-min access token, 4-day refresh token |
+| **Authorization** | StrictDjangoModelPermissions + Group-based RBAC across 4 clearance tiers |
+| **Audit Trail** | Immutable CUD logging via `signals.py` + `@audit_read` decorator on every READ |
+| **Rate Limiting** | Scoped throttles per endpoint group (Medical: 20/min · Audit: 50/min) |
+| **Data Integrity** | `transaction.atomic()` on all multi-model writes — zero ghost records |
+| **Deployment Hardening** | 7-point Django production security audit with documented mitigations |
+
+> 📄 For the full threat analysis, vulnerability explanations in plain language, and production mitigation code — see [`Security Test Report.md`](./Security%20Test%20Report.md)
+
+<br>
+
 ## Project Structure
 
 ```
@@ -78,9 +95,9 @@ Arkham Asylum Root/
 
 The repository contains three interactive `mermaid.js` diagrams detailing the exact flow and constraints of the system. Open these HTML files directly in any web browser to view the system visualization:
 
-* **`solution_architecture.html`**: High-level module interaction for Business Stakeholders.
-* **`technical_architecture.html`**: Low-level Django/DRF request lifecycles, middlewares, and throttles.
-* **`database_er_model.html`**: Exact Database Schema, relationships, and constraints.
+* **[`solution_architecture.html`](./solution_architecture.html)**: High-level module interaction for Business Stakeholders.
+* **[`technical_architecture.html`](./technical_architecture.html)**: Low-level Django/DRF request lifecycles, middlewares, and throttles.
+* **[`database_er_model.html`](./database_er_model.html)**: Exact Database Schema, relationships, and constraints.
 
 <br>
 
@@ -114,7 +131,7 @@ Log into your local MySQL workbench and create the database:
 CREATE DATABASE arkham_registry;
 ```
 
-*Note: Update `arkham_pm/settings.py` with your MySQL credentials.*
+*Note: Update [`arkham_pm/settings.py`](./arkham_pm/settings.py) with your MySQL credentials.*
 
 ### 5. Run Migrations & Start Server
 
@@ -140,9 +157,9 @@ Arkham Asylum ships with a comprehensive, three-layered testing architecture. Ea
 
 | Layer | Tool | Directory | Coverage |
 |-------|------|-----------|----------|
-| **Functional** | PyTest | `Functional Tests/` | 27 headless assertions across all 24+ endpoints |
-| **Performance** | Locust | `Performance Test/` | Load simulation with 100 concurrent JWT-authenticated users |
-| **Security** | Django Native | `Security Test Report.md` | 7-point deployment configuration audit |
+| **Functional** | PyTest | [`Functional Tests/`](./Functional%20Tests/) | 27 headless assertions across all 24+ endpoints |
+| **Performance** | Locust | [`Performance Test/`](./Performance%20Test/) | Load simulation with 100 concurrent JWT-authenticated users |
+| **Security** | Django Native | [`Security Test Report.md`](./Security%20Test%20Report.md) | 7-point deployment configuration audit |
 
 ### Run PyTest Functional/Automation Suite (Optional)
 
@@ -179,7 +196,7 @@ To grade the system's Django production settings and view inherently unmitigated
 python manage.py check --deploy
 ```
 
-*Note: The warnings raised here are intentional for development functionality. For mitigation strategies, refer to the `Security Test Report.md`.*
+*Note: The warnings raised here are intentional for development functionality. For mitigation strategies, refer to the [`Security Test Report.md`](./Security%20Test%20Report.md).*
 
 <br>
 

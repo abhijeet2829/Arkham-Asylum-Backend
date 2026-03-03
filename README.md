@@ -1,5 +1,11 @@
 # 🦇 Arkham Asylum Backend - Digital Forensic Psychiatric Hospital
 
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/Django-6.0-092E20?logo=django&logoColor=white)
+![DRF](https://img.shields.io/badge/DRF-3.16-ff1709?logo=django&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+
 A robust, Zero-Trust backend system designed for the secure management of Gotham's most dangerous criminals. Operating seamlessly across **25+ distinct API endpoints**, the registry serves as a digital fortress that bridges strict carceral containment with highly sensitive psychiatric care.
 
 <br>
@@ -33,6 +39,41 @@ A robust, Zero-Trust backend system designed for the secure management of Gotham
 
 <br>
 
+## Project Structure
+
+```
+Arkham Asylum Root/
+├── arkham_app/                   # Core Django application
+│   ├── management/commands/      # Custom management commands (DB seeder)
+│   ├── migrations/               # Database migration files
+│   ├── models.py                 # CellBlock, InmateProfile, MedicalFile, AuditLog
+│   ├── views.py                  # DRF ViewSets & business logic
+│   ├── serializers.py            # Request/Response serialization
+│   ├── permissions.py            # RBAC & StrictDjangoModelPermissions
+│   ├── signals.py                # Immutable CUD audit logging
+│   ├── decorators.py             # @audit_read decorator
+│   ├── throttles.py              # Scoped rate limiting
+│   ├── filters.py                # QuerySet filtering
+│   └── middleware.py             # ThreadLocal user tracking
+├── arkham_pm/                    # Django project settings & URL config
+├── Functional Tests/             # PyTest automation suite (27 test cases)
+│   ├── conftest.py               # Fixtures & auth token factories
+│   └── Functional test report.md # Terminal output & observations
+├── Performance Test/             # Locust load testing suite
+│   └── locustfile.py             # Swarm simulation with JWT auth
+├── Security Test Report.md       # Django deployment audit & mitigations
+├── solution_architecture.html    # High-level system diagram (Mermaid.js)
+├── technical_architecture.html   # Low-level request lifecycle diagram
+├── database_er_model.html        # ER model & schema visualization
+├── creds.md                      # Development user credentials reference
+├── requirements.txt              # Python dependencies
+├── pytest.ini                    # PyTest configuration
+├── LICENSE                       # MIT License
+└── SECURITY.md                   # Vulnerability reporting policy
+```
+
+<br>
+
 ## Architecture Documentation
 
 The repository contains three interactive `mermaid.js` diagrams detailing the exact flow and constraints of the system. Open these HTML files directly in any web browser to view the system visualization:
@@ -48,8 +89,8 @@ The repository contains three interactive `mermaid.js` diagrams detailing the ex
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/arkham-asylum-backend.git
-cd arkham-asylum-backend
+git clone https://github.com/abhijeet2829/Arkham-Asylum-Backend.git
+cd Arkham-Asylum-Backend
 ```
 
 ### 2. Set Up Virtual Environment
@@ -91,7 +132,19 @@ To prevent manual data entry via Postman, Arkham features an automated database 
 python manage.py seed_arkham
 ```
 
-### 7. Run PyTest Functional/Automation Suite (Optional)
+<br>
+
+## Testing & Quality Assurance
+
+Arkham Asylum ships with a comprehensive, three-layered testing architecture. Each layer can be executed independently.
+
+| Layer | Tool | Directory | Coverage |
+|-------|------|-----------|----------|
+| **Functional** | PyTest | `Functional Tests/` | 27 headless assertions across all 24+ endpoints |
+| **Performance** | Locust | `Performance Test/` | Load simulation with 100 concurrent JWT-authenticated users |
+| **Security** | Django Native | `Security Test Report.md` | 7-point deployment configuration audit |
+
+### Run PyTest Functional/Automation Suite (Optional)
 
 To verify the structural integrity of all 24 API endpoints locally, execute the headless PyTest suite against the project.
 
@@ -99,7 +152,7 @@ To verify the structural integrity of all 24 API endpoints locally, execute the 
 pytest -v
 ```
 
-### 8. Run Performance Test Suite (Optional)
+### Run Performance Test Suite (Optional)
 
 To execute the Arkham Asylum load-testing swarm and monitor response behavior under heavy personnel traffic:
 
@@ -118,7 +171,7 @@ Open `http://localhost:8089` in your local browser to configure the swarm.
 
 Click "Start swarming" to commence load testing. Stop after few secs & analyze the results.
 
-### 9. Run Security Audit (Optional)
+### Run Security Audit (Optional)
 
 To grade the system's Django production settings and view inherently unmitigated local vulnerabilities:
 
@@ -126,7 +179,7 @@ To grade the system's Django production settings and view inherently unmitigated
 python manage.py check --deploy
 ```
 
-*Note: The warnings raised here are intentional for development functionality. For mitigation strategies, refer to the `Security Tests` directory.*
+*Note: The warnings raised here are intentional for development functionality. For mitigation strategies, refer to the `Security Test Report.md`.*
 
 <br>
 
@@ -228,3 +281,9 @@ Base URL: `http://127.0.0.1:8000`
 |---|--------|----------|---------------|----------------|-------------|
 | 23 | `GET` | `/api/v1/default-router/security-logs` | Super Admin | — | List all audit entries. Throttled (50/min). |
 | 24 | `GET` | `/api/v1/default-router/security-logs/{id}` | Super Admin | — | Retrieve specific audit log entry. |
+
+<br>
+
+## License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.

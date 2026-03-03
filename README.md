@@ -5,6 +5,8 @@
 ![DRF](https://img.shields.io/badge/DRF-3.16-ff1709?logo=django&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
+![Coverage](https://img.shields.io/badge/Endpoints-25%2B-blue)
+
 
 A robust, Zero-Trust backend system designed for the secure management of Gotham's most dangerous criminals. Operating seamlessly across **25+ distinct API endpoints**, the registry serves as a digital fortress that bridges strict carceral containment with highly sensitive psychiatric care.
 

@@ -125,6 +125,8 @@ source venv/bin/activate  # On Windows use: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+The dependency list includes Windows-specific `pywin32` and MySQL's `mysqlclient`. Setup on other operating systems may require adapting the dependency list and installing platform-specific MySQL build prerequisites; the setup has not been rerun for this documentation update.
+
 ### 4. Database Setup
 
 Log into your local MySQL workbench and create the database:

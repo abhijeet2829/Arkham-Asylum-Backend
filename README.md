@@ -159,13 +159,13 @@ Arkham Asylum ships with a comprehensive, three-layered testing architecture. Ea
 
 | Layer | Tool | Directory | Coverage |
 |-------|------|-----------|----------|
-| **Functional** | PyTest | [`Functional Tests/`](./Functional%20Tests/) | 27 headless assertions across all 24+ endpoints |
+| **Functional** | PyTest | [`Functional Tests/`](./Functional%20Tests/) | 27 PyTest functions across 6 modules |
 | **Performance** | Locust | [`Performance Test/`](./Performance%20Test/) | Load simulation with 100 concurrent JWT-authenticated users |
 | **Security** | Django Native | [`Security Test Report.md`](./Security%20Test%20Report.md) | 7-point deployment configuration audit |
 
 ### Run PyTest Functional/Automation Suite (Optional)
 
-To verify the structural integrity of all 24 API endpoints locally, execute the headless PyTest suite against the project.
+To exercise the included functional tests locally, run the PyTest suite below. These tests cover selected behavior; they do not establish coverage of every endpoint.
 
 ```bash
 pytest -v

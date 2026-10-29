@@ -1,5 +1,7 @@
 # 🦇 Arkham Asylum Backend - Digital Forensic Psychiatric Hospital
 
+## Project Description
+
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![Django](https://img.shields.io/badge/Django-6.0-092E20?logo=django&logoColor=white)
 ![DRF](https://img.shields.io/badge/DRF-3.16-ff1709?logo=django&logoColor=white)
@@ -12,7 +14,7 @@ A robust, Zero-Trust backend system designed for the secure management of Gotham
 
 <br>
 
-## Technology Stack & AI
+## Tech Stack Used
 
 **Core Infrastructure...**
 
@@ -28,6 +30,58 @@ A robust, Zero-Trust backend system designed for the secure management of Gotham
 * **AntiGravity (Google AI Pro):** Orchestrated core Backend logics, database structuring, and rigorous backend engine design.
 * **Perplexity Pro:** Utilized for high-level research and requirements extension in a logical, architectural way.
 * **OpenClaw (`openai-gpt5-chat-latest`):** Provided OS-level project control, contextual awareness, and overarching advisory guidance.
+
+<br>
+
+## Setup & Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/abhijeet2829/Arkham-Asylum-Backend.git
+cd Arkham-Asylum-Backend
+```
+
+### 2. Set Up Virtual Environment
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+The dependency list includes Windows-specific `pywin32` and MySQL's `mysqlclient`. Setup on other operating systems may require adapting the dependency list and installing platform-specific MySQL build prerequisites; the setup has not been rerun for this documentation update.
+
+### 4. Database Setup
+
+Log into your local MySQL workbench and create the database:
+
+```sql
+CREATE DATABASE arkham_registry;
+```
+
+*Note: Update [`arkham_pm/settings.py`](./arkham_pm/settings.py) with your MySQL credentials.*
+
+### 5. Run Migrations & Start Server
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+python manage.py runserver 8000
+```
+
+### 6. Populate Baseline Data (Optional)
+
+To prevent manual data entry via Postman, Arkham features an automated database seeder. This will inject 10 comprehensive Inmates, linked Medical Files, 4 Security Clearance Groups, 3 Cell Blocks, and 10 Active Personnel directly into your local database.
+
+```bash
+python manage.py seed_arkham
+```
 
 <br>
 
@@ -100,58 +154,6 @@ The repository contains three interactive `mermaid.js` diagrams detailing the ex
 * **[`solution_architecture.html`](./solution_architecture.html)**: High-level module interaction for Business Stakeholders.
 * **[`technical_architecture.html`](./technical_architecture.html)**: Low-level Django/DRF request lifecycles, middlewares, and throttles.
 * **[`database_er_model.html`](./database_er_model.html)**: Exact Database Schema, relationships, and constraints.
-
-<br>
-
-## Quick Start & Local Setup
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/abhijeet2829/Arkham-Asylum-Backend.git
-cd Arkham-Asylum-Backend
-```
-
-### 2. Set Up Virtual Environment
-
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
-```
-
-### 3. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-The dependency list includes Windows-specific `pywin32` and MySQL's `mysqlclient`. Setup on other operating systems may require adapting the dependency list and installing platform-specific MySQL build prerequisites; the setup has not been rerun for this documentation update.
-
-### 4. Database Setup
-
-Log into your local MySQL workbench and create the database:
-
-```sql
-CREATE DATABASE arkham_registry;
-```
-
-*Note: Update [`arkham_pm/settings.py`](./arkham_pm/settings.py) with your MySQL credentials.*
-
-### 5. Run Migrations & Start Server
-
-```bash
-python manage.py makemigrations
-python manage.py migrate
-python manage.py runserver 8000
-```
-
-### 6. Populate Baseline Data (Optional)
-
-To prevent manual data entry via Postman, Arkham features an automated database seeder. This will inject 10 comprehensive Inmates, linked Medical Files, 4 Security Clearance Groups, 3 Cell Blocks, and 10 Active Personnel directly into your local database.
-
-```bash
-python manage.py seed_arkham
-```
 
 <br>
 
@@ -308,3 +310,4 @@ Base URL: `http://127.0.0.1:8000`
 ## License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
